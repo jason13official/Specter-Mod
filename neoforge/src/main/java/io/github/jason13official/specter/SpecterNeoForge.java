@@ -1,5 +1,6 @@
 package io.github.jason13official.specter;
 
+import io.github.jason13official.specter.impl.common.entity.Specter;
 import io.github.jason13official.specter.impl.common.registry.ModBlocks;
 import io.github.jason13official.specter.impl.common.registry.ModEntities;
 import io.github.jason13official.specter.impl.common.registry.ModItems;
@@ -23,6 +24,7 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
 @Mod(Constants.MOD_ID)
@@ -42,7 +44,11 @@ public class SpecterNeoForge {
     bind(Registries.MENU, ModMenus::register);
     bind(Registries.CREATIVE_MODE_TAB, ModTabs::register);
 
-    EVENT_BUS.addListener((Consumer<FMLCommonSetupEvent>) event -> Specter.init());
+    EVENT_BUS.addListener((Consumer<FMLCommonSetupEvent>) event -> SpecterMod.init());
+
+    EVENT_BUS.addListener((Consumer<EntityAttributeCreationEvent>) event -> {
+      event.put(ModEntities.SPECTER, Specter.createAttributes().build());
+    });
 
     NeoForge.EVENT_BUS.addListener((Consumer<AddReloadListenerEvent>) event -> {
       event.addListener(new ResourceReloadListener());
@@ -66,7 +72,7 @@ public class SpecterNeoForge {
 
     @Override
     public String getName() {
-      return Specter.identifier(Constants.MOD_ID).toString();
+      return SpecterMod.identifier(Constants.MOD_ID).toString();
     }
 
     @Override

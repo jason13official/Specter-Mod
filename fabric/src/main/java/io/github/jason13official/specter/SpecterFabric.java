@@ -1,5 +1,6 @@
 package io.github.jason13official.specter;
 
+import io.github.jason13official.specter.impl.common.entity.Specter;
 import io.github.jason13official.specter.impl.common.registry.ModBlocks;
 import io.github.jason13official.specter.impl.common.registry.ModEntities;
 import io.github.jason13official.specter.impl.common.registry.ModItems;
@@ -10,6 +11,7 @@ import io.github.jason13official.specter.impl.common.registry.ModTiles;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.core.Registry;
@@ -31,7 +33,9 @@ public class SpecterFabric implements ModInitializer {
     bind(BuiltInRegistries.MENU, ModMenus::register);
     bind(BuiltInRegistries.CREATIVE_MODE_TAB, ModTabs::register);
 
-    Specter.init();
+    SpecterMod.init();
+
+    FabricDefaultAttributeRegistry.register(ModEntities.SPECTER, Specter.createAttributes());
 
     ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new ResourceReloadListener());
   }
@@ -45,7 +49,7 @@ public class SpecterFabric implements ModInitializer {
 
     @Override
     public ResourceLocation getFabricId() {
-      return Specter.identifier(Constants.MOD_ID);
+      return SpecterMod.identifier(Constants.MOD_ID);
     }
 
     @Override
