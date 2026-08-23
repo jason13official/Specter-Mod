@@ -1,6 +1,7 @@
 package io.github.jason13official.specter.impl.common.entity;
 
 import io.github.jason13official.specter.platform.Services;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
@@ -21,6 +22,8 @@ import net.minecraft.world.entity.TraceableEntity;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,6 +117,17 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
     this.entityData.set(OPTIONAL_OWNER_UUID, Optional.of(uuid));
   }
 
+  /// search near ownerId's last known position;
+  /// relies on [AbstractSpecter#teleportToOwner] keeping Specter near its owner
+  @Nullable
+  public static AbstractSpecter findOwned(ServerLevel level, LivingEntity owner) {
+
+    List<AbstractSpecter> found = level.getEntities(EntityTypeTest.forClass(AbstractSpecter.class),
+        owner.getBoundingBox().inflate(32.0D), specter -> owner.getUUID().equals(specter.getOwnerId().orElse(null)));
+
+    return found.isEmpty() ? null : found.get(0);
+  }
+
   public int getSpecterColor() {
 
     return this.getEntityData().get(SPECTER_COLOR);
@@ -133,14 +147,10 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
 
     teleportToOwner();
 
-    if (!this.level().isClientSide() && this.owner == null) {
-
-      if (Services.PLATFORM.isDevelopmentEnvironment()) {
-        System.out.println(this.getUUID() + " discardTicks: " + this.discardTicks);
-      }
+    if (this.level() instanceof ServerLevel level && this.owner == null) {
 
       if (discardTicks <= 0) {
-        // TODO update whoever tracks the entity?
+
         this.discard();
       } else {
         this.discardTicks -= 1;

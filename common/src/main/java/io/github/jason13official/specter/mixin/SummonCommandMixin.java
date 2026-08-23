@@ -1,6 +1,7 @@
 package io.github.jason13official.specter.mixin;
 
 import io.github.jason13official.specter.impl.common.entity.AbstractSpecter;
+import io.github.jason13official.specter.impl.common.event.SpecterEvents;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Holder.Reference;
 import net.minecraft.nbt.CompoundTag;
@@ -22,7 +23,7 @@ public class SummonCommandMixin {
     if (cir.getReturnValue() != null) {
       Entity entity = cir.getReturnValue();
       if (entity instanceof AbstractSpecter specter) {
-        specter.setOwner(source.getPlayer());
+        SpecterEvents.claimSpecter(source.getPlayer(), specter);
       }
     }
   }
