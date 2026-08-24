@@ -179,7 +179,7 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
     }
   }
 
-  private void teleportToOwner() {
+  public void teleportToOwner() {
 
     if (!(this.level() instanceof ServerLevel level)) return;
     if (this.owner == null) return;

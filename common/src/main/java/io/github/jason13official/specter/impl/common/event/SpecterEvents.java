@@ -3,6 +3,7 @@ package io.github.jason13official.specter.impl.common.event;
 import io.github.jason13official.specter.api.common.util.SpecterDataHolder;
 import io.github.jason13official.specter.impl.common.entity.AbstractSpecter;
 import io.github.jason13official.specter.impl.common.registry.ModEntities;
+import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -12,6 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 public class SpecterEvents {
 
   private static final String SPECTER_SNAPSHOT_TAG = "specter_snapshot";
+  private static final String SPECTER_UUID_TAG = "specter_uuid";
 
   public static void onPlayerLoggedIn(ServerPlayer player) {
 
@@ -40,9 +42,27 @@ public class SpecterEvents {
     if (specter == null) return;
 
     CompoundTag snapshot = specter.saveWithoutId(new CompoundTag());
-    ((SpecterDataHolder) player).specter$getPersistentData().put(SPECTER_SNAPSHOT_TAG, snapshot);
+
+    CompoundTag data = ((SpecterDataHolder) player).specter$getPersistentData();
+    data.put(SPECTER_SNAPSHOT_TAG, snapshot);
+    data.remove(SPECTER_UUID_TAG);
 
     specter.discard();
+  }
+
+  public static void recallSpecterIfLost(ServerPlayer player) {
+
+    CompoundTag data = ((SpecterDataHolder) player).specter$getPersistentData();
+    if (!data.hasUUID(SPECTER_UUID_TAG)) return;
+
+    UUID specterId = data.getUUID(SPECTER_UUID_TAG);
+
+    for (ServerLevel level : player.getServer().getAllLevels()) {
+      if (level.getEntity(specterId) instanceof AbstractSpecter specter) {
+        specter.teleportToOwner();
+        return;
+      }
+    }
   }
 
   /// a player may only own one Specter at a time; claiming a new one (via `/summon` or
@@ -60,5 +80,7 @@ public class SpecterEvents {
     }
 
     specter.setOwner(player);
+
+    ((SpecterDataHolder) player).specter$getPersistentData().putUUID(SPECTER_UUID_TAG, specter.getUUID());
   }
 }
