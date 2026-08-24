@@ -163,6 +163,8 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
 
     floatTowardsOwner();
 
+    lookAtOwner();
+
     if (this.level() instanceof ServerLevel level && this.owner == null) {
 
       if (discardTicks <= 0) {
@@ -228,6 +230,22 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
     this.setPos(this.getX() + movement.x, this.getY() + movement.y, this.getZ() + movement.z);
 
     this.setDeltaMovement(movement.multiply(0.49, 0.98, 0.49));
+  }
+
+  /// server-authoritative; the client interpolates rotation
+  private void lookAtOwner() {
+
+    if (!(this.level() instanceof ServerLevel)) return;
+    if (this.owner == null) return;
+
+    float maxRotDegrees = 8.0f;
+
+    Vec3 toOwner = new Vec3(this.owner.getX() - this.getX(), this.owner.getY() + this.owner.getEyeHeight() + 0.25 - this.getY(), this.owner.getZ() - this.getZ());
+    if (toOwner.lengthSqr() > 16.0) {
+      maxRotDegrees = 16.0f;
+    }
+
+    this.lookAt(this.owner, maxRotDegrees, maxRotDegrees);
   }
 
   /// discards this instance and spawns a fresh one in the owner's level, carrying over full NBT;
