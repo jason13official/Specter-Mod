@@ -1,5 +1,6 @@
 package io.github.jason13official.specter.impl.common.entity;
 
+import io.github.jason13official.specter.impl.common.event.SpecterEvents;
 import io.github.jason13official.specter.platform.Services;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.syncher.SynchedEntityData.Builder;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -89,6 +91,13 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
     data.putInt(SPECTER_COLOR_TAG, this.getSpecterColor());
   }
 
+  /// disable traveling through portals; must teleport to owner cross-dimensionally
+  @Override
+  public boolean isOnPortalCooldown() {
+
+    return true;
+  }
+
   @Override
   public @Nullable Entity getOwner() {
 
@@ -147,6 +156,8 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
 
     teleportToOwner();
 
+    if (this.isRemoved()) return;
+
     if (this.level() instanceof ServerLevel level && this.owner == null) {
 
       if (discardTicks <= 0) {
@@ -161,28 +172,70 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
   private void teleportToOwner() {
 
     if (!(this.level() instanceof ServerLevel level)) return;
+    if (this.owner == null) return;
 
-    if (this.owner != null && this.distanceTo(this.owner) > 8.0f) {
+    // Entity#teleportTo only moves within a level; the owner changing dimension (portal,
+    // /execute in, a respawn point in another world, etc.) needs a level swap instead
+    if (this.owner.level() instanceof ServerLevel ownerLevel && !level.dimension().equals(ownerLevel.dimension())) {
+      relocateToLevel(ownerLevel);
+      return;
+    }
+
+    if (this.distanceTo(this.owner) > 8.0f) {
       Vec3 pos = owner.position().add((level.getRandom().nextFloat() * 2) - 1, owner.getEyeHeight(), (level.getRandom().nextFloat() * 2) - 1);
       this.teleportTo(level, pos.x, pos.y, pos.z, RelativeMovement.ROTATION, 0, 0);
     }
   }
 
+  /// discards this instance and spawns a fresh one in the owner's level, carrying over full NBT;
+  /// same snapshot/reload approach as player logout/login events in [SpecterEvents]
+  private void relocateToLevel(ServerLevel targetLevel) {
+
+    CompoundTag snapshot = this.saveWithoutId(new CompoundTag());
+
+    Entity created = this.getType().create(targetLevel);
+    if (!(created instanceof AbstractSpecter relocated)) return;
+
+    relocated.load(snapshot);
+    relocated.moveTo(owner.getX(), owner.getY(), owner.getZ(), owner.getYRot(), 0.0F);
+    relocated.setOwner(this.owner);
+
+    targetLevel.addFreshEntity(relocated);
+
+    this.discard();
+  }
+
+  /// owner UUID is synced via [AbstractSpecter#OPTIONAL_OWNER_UUID],
+  /// `owner` itself is not networked, so the client has to resolve it locally.
+  /// `SpecterModel` depends on it for the shell-render distance check
   private void synchronizeToOwner() {
-    if (this.owner == null) {
 
-      Optional<UUID> optional = this.entityData.get(OPTIONAL_OWNER_UUID);
-      if (optional.isPresent()) {
-        UUID ownerId = optional.get();
+    if (this.owner != null && this.owner.isRemoved()) {
+      // stale reference: e.g. the owning player respawned into a new entity instance
+      this.owner = null;
+    }
 
-        var nearbyLiving = this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(16.0D));
-        for (LivingEntity checked : nearbyLiving) {
+    if (this.owner != null) return;
 
-          if (checked.getUUID().equals(ownerId)) {
-            this.owner = checked;
-            break;
-          }
-        }
+    Optional<UUID> optional = this.entityData.get(OPTIONAL_OWNER_UUID);
+    if (optional.isEmpty()) return;
+
+    UUID ownerId = optional.get();
+
+    if (this.level() instanceof ServerLevel level) {
+      ServerPlayer player = level.getServer().getPlayerList().getPlayer(ownerId);
+      if (player != null) {
+        this.owner = player;
+        return;
+      }
+    }
+
+    var nearbyLiving = this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(16.0D));
+    for (LivingEntity checked : nearbyLiving) {
+
+      if (checked.getUUID().equals(ownerId)) {
+        this.owner = checked;
+        break;
       }
     }
   }
