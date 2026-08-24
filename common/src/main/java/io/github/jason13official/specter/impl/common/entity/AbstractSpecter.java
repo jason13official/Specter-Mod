@@ -14,11 +14,14 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.syncher.SynchedEntityData.Builder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.entity.TraceableEntity;
 import net.minecraft.world.item.DyeColor;
@@ -158,6 +161,8 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
 
     if (this.isRemoved()) return;
 
+    floatTowardsOwner();
+
     if (this.level() instanceof ServerLevel level && this.owner == null) {
 
       if (discardTicks <= 0) {
@@ -181,10 +186,48 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
       return;
     }
 
-    if (this.distanceTo(this.owner) > 8.0f) {
+    // if we get too far; floatTowardsOwner() handles normal following otherwise
+    if (this.distanceTo(this.owner) > 16.0f) {
       Vec3 pos = owner.position().add((level.getRandom().nextFloat() * 2) - 1, owner.getEyeHeight(), (level.getRandom().nextFloat() * 2) - 1);
       this.teleportTo(level, pos.x, pos.y, pos.z, RelativeMovement.ROTATION, 0, 0);
     }
+  }
+
+  /// move towards owner via direct pos translation; no block collision so we never get stuck
+  private void floatTowardsOwner() {
+
+    if (!(this.level() instanceof ServerLevel level)) return;
+    if (this.owner == null) return;
+    if (!level.dimension().equals(this.owner.level().dimension())) return;
+
+    if (level.getFluidState(this.blockPosition()).is(FluidTags.LAVA)) {
+      this.setDeltaMovement((this.random.nextFloat() - this.random.nextFloat()) * 0.2F, 0.2F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
+    }
+
+    // if we are in or above air (used to check if we're colliding with the ceiling)
+    boolean inOrAboveAir = this.level().getBlockState(this.blockPosition()).is(BlockTags.AIR) || this.level().getBlockState(this.blockPosition().below()).is(BlockTags.AIR);
+
+    // no block collision on the actual move;
+    // just bias deltaMovement towards open space so we don't clip into the ceiling
+    if (!level.noCollision(this.getBoundingBox()) && inOrAboveAir) {
+      // this.moveTowardsClosestSpace(this.getX(), (this.getBoundingBox().minY + this.getBoundingBox().maxY) / 2.0, this.getZ());
+      this.setDeltaMovement(0, -0.1, 0);
+    }
+
+    // aim slightly above the owner's eyes
+    Vec3 toOwner = new Vec3(this.owner.getX() - this.getX(), this.owner.getY() + this.owner.getEyeHeight() + 0.25 - this.getY(), this.owner.getZ() - this.getZ());
+    double distSq = toOwner.lengthSqr();
+
+    double dampening = distSq < 8.0 ? 0.5 : 1.0;
+
+    if (distSq > 4.0) {
+      this.setDeltaMovement(this.getDeltaMovement().add(toOwner.normalize().scale(dampening * dampening * 0.14)));
+    }
+
+    Vec3 movement = this.getDeltaMovement();
+    this.setPos(this.getX() + movement.x, this.getY() + movement.y, this.getZ() + movement.z);
+
+    this.setDeltaMovement(movement.multiply(0.49, 0.98, 0.49));
   }
 
   /// discards this instance and spawns a fresh one in the owner's level, carrying over full NBT;
@@ -265,6 +308,18 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
   // endregion renderStuff
 
   // region interactionWorldly
+
+  @Override
+  protected boolean wouldNotSuffocateAtTargetPose(Pose pose) {
+
+    return true;
+  }
+
+  @Override
+  public boolean isInWall() {
+
+    return false;
+  }
 
   @Override
   public boolean isPickable() {
