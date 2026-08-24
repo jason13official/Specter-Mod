@@ -58,6 +58,16 @@ public class SpecterModel extends EntityModel<Specter> {
     this.shellRendered = value;
   }
 
+  public ModelPart getBody() {
+
+    return this.body;
+  }
+
+  public ModelPart getShell() {
+
+    return this.shell;
+  }
+
   @Override
   public void setupAnim(@NotNull Specter specter, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
 

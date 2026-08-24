@@ -58,11 +58,17 @@ public class SpecterRenderer extends EntityRenderer<Specter> implements RenderLa
     poseStack.scale(-1.0F, -1.0F, 1.0F);
     this.getModel().setupAnim(specter, partialTick, 0.0F, -0.1F, 0.0F, 0.0F);
 
-//    float[] diffuseColors = specter.getDiffuseSpecterColors();
-//    this.getModel().renderToBuffer(poseStack, buffer.getBuffer(RenderType.entityTranslucentCull(this.getTextureLocation(specter))), packedLight, OverlayTexture.NO_OVERLAY, diffuseColors[0],
-//        diffuseColors[1], diffuseColors[2], 1.0f);s();
-    // this.getModel().renderToBuffer(poseStack, buffer.getBuffer(RenderType.entityTranslucentCull(this.getTextureLocation(specter))), packedLight, OverlayTexture.NO_OVERLAY, 0xFF000000 | MapColor.COLOR_CYAN.col);
-    this.getModel().renderToBuffer(poseStack, buffer.getBuffer(RenderType.entityTranslucentCull(this.getTextureLocation(specter))), packedLight, OverlayTexture.NO_OVERLAY, specter.getSpecterColor());
+    ResourceLocation texture = this.getTextureLocation(specter);
+    int color = specter.getSpecterColor();
+
+    this.getModel().getBody().render(poseStack, buffer.getBuffer(RenderType.entityCutout(texture)), packedLight, OverlayTexture.NO_OVERLAY, color);
+
+    if (this.getModel().isShellRendered()) {
+      // entityTranslucentCull writes depth even where a fragment is mostly transparent, so
+      // anything drawn after it (chests, water, ...) fails its depth test there and never
+      // shows through; entityTranslucentEmissive is color-write only, no depth write
+      this.getModel().getShell().render(poseStack, buffer.getBuffer(RenderType.entityTranslucentEmissive(texture)), packedLight, OverlayTexture.NO_OVERLAY, color);
+    }
 
     poseStack.popPose();
 
