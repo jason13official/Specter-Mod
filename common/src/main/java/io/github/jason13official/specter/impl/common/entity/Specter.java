@@ -80,7 +80,26 @@ public class Specter extends AbstractSpecter {
 
     if (this.tickCount % 20 == 0) {
       healOwner();
+      if (this.tickCount % 40 == 0) healSelf();
     }
+  }
+
+  /// so our ghosts don't slowly die over time without healing
+  private void healSelf() {
+
+    if (!(this.level() instanceof ServerLevel level)) return;
+    if (this.isDeadOrDying()) return;
+
+    boolean healed = false;
+
+    if (this.getHealth() < this.getMaxHealth() * 0.5f) {
+      this.heal(1.0f);
+      healed = true;
+    }
+
+    if (!healed) return;
+
+    level.playSound(null, this.blockPosition(), SoundEvents.ALLAY_THROW, SoundSource.AMBIENT, 0.6f, 0.4f);
   }
 
   /// lore: Ghosts channel the Traveler's Light to mend flesh and cure poisons;
