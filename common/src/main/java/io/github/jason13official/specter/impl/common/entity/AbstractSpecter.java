@@ -16,6 +16,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -28,6 +30,7 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -216,17 +219,35 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
       this.setDeltaMovement(0, -0.1, 0);
     }
 
-    // aim slightly above the owner's eyes
-    Vec3 toOwner = new Vec3(this.owner.getX() - this.getX(), this.owner.getY() + this.owner.getEyeHeight() + 0.25 - this.getY(), this.owner.getZ() - this.getZ());
+    boolean nearOwner = this.distanceToSqr(this.owner) < 16.0;
+
+    // near the owner, settle towards a steady resting height instead of chasing eye
+    // height; the bobbing compounds into an upward drift after fast movement
+    double targetY = nearOwner ? this.owner.getY() + 1.0 : this.owner.getY() + this.owner.getEyeHeight() + 0.25;
+
+    Vec3 toOwner = new Vec3(this.owner.getX() - this.getX(), targetY - this.getY(), this.owner.getZ() - this.getZ());
     double distSq = toOwner.lengthSqr();
 
     double dampening = distSq < 8.0 ? 0.5 : 1.0;
 
     if (distSq > 4.0) {
       this.setDeltaMovement(this.getDeltaMovement().add(toOwner.normalize().scale(dampening * dampening * 0.14)));
+    } else if (nearOwner) {
+      // inside the dampening area, but not at the resting height (spawned at
+      // owner's feet, close but at odd height, etc.) -> nudge towards resting height
+      // instead of just sitting there, where our momentum ran out
+      this.setDeltaMovement(this.getDeltaMovement().add(0, Mth.clamp((targetY - this.getY()) * 0.05, -0.02, 0.02), 0));
     }
 
     Vec3 movement = this.getDeltaMovement();
+
+    if (nearOwner) {
+      // cap leftover vertical speed carried in from before we got close, so we don't keep
+      // drifting upward for a while after the owner stops moving
+      movement = new Vec3(movement.x, Mth.clamp(movement.y, -0.06, 0.06), movement.z);
+      this.setDeltaMovement(movement);
+    }
+
     this.setPos(this.getX() + movement.x, this.getY() + movement.y, this.getZ() + movement.z);
 
     this.setDeltaMovement(movement.multiply(0.49, 0.98, 0.49));
@@ -343,6 +364,60 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
   public boolean isPickable() {
 
     // TODO should we allow middle-clicking to get a copy?
+    return false;
+  }
+
+  @Override
+  public void push(Vec3 vector) {
+
+    // no-op
+  }
+
+  @Override
+  public void push(Entity entity) {
+
+    // no-op
+  }
+
+  @Override
+  public void push(double x, double y, double z) {
+
+    // no-op
+  }
+
+  @Override
+  protected void pushEntities() {
+
+    // no-op
+  }
+
+  @Override
+  protected void doPush(Entity entity) {
+
+    // no-op
+  }
+
+  @Override
+  public boolean isPushable() {
+
+    return false;
+  }
+
+  @Override
+  public boolean isPushedByFluid() {
+
+    return false;
+  }
+
+  @Override
+  public boolean updateFluidHeightAndDoFluidPushing(TagKey<Fluid> fluidTag, double motionScale) {
+
+    return false;
+  }
+
+  @Override
+  protected boolean updateInWaterStateAndDoFluidPushing() {
+
     return false;
   }
 
