@@ -2,6 +2,7 @@ package io.github.jason13official.specter;
 
 import io.github.jason13official.specter.impl.common.entity.Specter;
 import io.github.jason13official.specter.impl.common.event.SpecterEvents;
+import io.github.jason13official.specter.impl.common.loot.SpecterLootModifiersFabric;
 import io.github.jason13official.specter.impl.common.registry.ModBlocks;
 import io.github.jason13official.specter.impl.common.registry.ModEntities;
 import io.github.jason13official.specter.impl.common.registry.ModItems;
@@ -43,6 +44,8 @@ public class SpecterFabric implements ModInitializer {
 
     ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> SpecterEvents.onPlayerLoggedIn(handler.getPlayer()));
     ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> SpecterEvents.onPlayerLoggedOut(handler.getPlayer()));
+
+    SpecterLootModifiersFabric.register();
   }
 
   public <T> void bind(Registry<T> registry, Consumer<BiConsumer<T, ResourceLocation>> source) {

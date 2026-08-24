@@ -2,6 +2,7 @@ package io.github.jason13official.specter;
 
 import io.github.jason13official.specter.impl.common.entity.Specter;
 import io.github.jason13official.specter.impl.common.event.SpecterEvents;
+import io.github.jason13official.specter.impl.common.loot.NeoForgeLootModifiers;
 import io.github.jason13official.specter.impl.common.registry.ModBlocks;
 import io.github.jason13official.specter.impl.common.registry.ModEntities;
 import io.github.jason13official.specter.impl.common.registry.ModItems;
@@ -46,6 +47,8 @@ public class SpecterNeoForge {
     bind(Registries.BLOCK_ENTITY_TYPE, ModTiles::register);
     bind(Registries.MENU, ModMenus::register);
     bind(Registries.CREATIVE_MODE_TAB, ModTabs::register);
+
+    NeoForgeLootModifiers.register(EVENT_BUS);
 
     EVENT_BUS.addListener((Consumer<FMLCommonSetupEvent>) event -> SpecterMod.init());
 
