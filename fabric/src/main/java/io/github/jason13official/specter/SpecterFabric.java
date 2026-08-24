@@ -1,5 +1,8 @@
 package io.github.jason13official.specter;
 
+import io.github.jason13official.specter.impl.common.entity.Specter;
+import io.github.jason13official.specter.impl.common.event.SpecterEvents;
+import io.github.jason13official.specter.impl.common.loot.FabricLootModifiers;
 import io.github.jason13official.specter.impl.common.registry.ModBlocks;
 import io.github.jason13official.specter.impl.common.registry.ModEntities;
 import io.github.jason13official.specter.impl.common.registry.ModItems;
@@ -7,9 +10,13 @@ import io.github.jason13official.specter.impl.common.registry.ModMenus;
 import io.github.jason13official.specter.impl.common.registry.ModParticles;
 import io.github.jason13official.specter.impl.common.registry.ModTabs;
 import io.github.jason13official.specter.impl.common.registry.ModTiles;
+import io.github.jason13official.specter.impl.common.util.ModConfigIO;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.core.Registry;
@@ -33,7 +40,16 @@ public class SpecterFabric implements ModInitializer {
 
     SpecterMod.init();
 
+    FabricDefaultAttributeRegistry.register(ModEntities.SPECTER, Specter.createAttributes());
+
     ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new ResourceReloadListener());
+
+    ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> SpecterEvents.onPlayerLoggedIn(handler.getPlayer()));
+    ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> SpecterEvents.onPlayerLoggedOut(handler.getPlayer()));
+
+    ServerEntityEvents.ENTITY_LOAD.register(SpecterEvents::onEntityJoin);
+
+    FabricLootModifiers.register();
   }
 
   public <T> void bind(Registry<T> registry, Consumer<BiConsumer<T, ResourceLocation>> source) {
@@ -50,7 +66,7 @@ public class SpecterFabric implements ModInitializer {
 
     @Override
     public void onResourceManagerReload(ResourceManager resourceManager) {
-      // ModConfig.load(Services.PLATFORM.getConfigDirectory());
+      ModConfigIO.loadOrInitialize();
     }
   }
 }

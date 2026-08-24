@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "item": "minecraft:copper_ingot"
+    },
+    "X": {
+      "item": "specter:specter_core"
+    },
+    "D": {
+      "tag": "specter:wools"
+    }
+  },
+  "pattern": [
+    "D#D",
+    "#X#",
+    "D#D"
+  ],
+  "result": {
+    "item": "specter:condensed_specter"
+  },
+  "show_notification": true
+}

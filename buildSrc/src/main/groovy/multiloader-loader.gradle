@@ -19,6 +19,7 @@ dependencies {
     }
     commonJava project(path: ':common', configuration: 'commonJava')
     commonResources project(path: ':common', configuration: 'commonResources')
+    compileOnly 'org.jetbrains:annotations:26.0.2'
 }
 
 tasks.named('compileJava', JavaCompile) {

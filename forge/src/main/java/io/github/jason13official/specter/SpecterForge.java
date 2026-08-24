@@ -1,5 +1,8 @@
 package io.github.jason13official.specter;
 
+import io.github.jason13official.specter.impl.common.entity.Specter;
+import io.github.jason13official.specter.impl.common.event.SpecterEvents;
+import io.github.jason13official.specter.impl.common.loot.ForgeLootModifiers;
 import io.github.jason13official.specter.impl.common.registry.ModBlocks;
 import io.github.jason13official.specter.impl.common.registry.ModEntities;
 import io.github.jason13official.specter.impl.common.registry.ModItems;
@@ -7,18 +10,24 @@ import io.github.jason13official.specter.impl.common.registry.ModMenus;
 import io.github.jason13official.specter.impl.common.registry.ModParticles;
 import io.github.jason13official.specter.impl.common.registry.ModTabs;
 import io.github.jason13official.specter.impl.common.registry.ModTiles;
+import io.github.jason13official.specter.impl.common.util.ModConfigIO;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
+import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -42,10 +51,34 @@ public class SpecterForge {
     bind(Registries.MENU, ModMenus::register);
     bind(Registries.CREATIVE_MODE_TAB, ModTabs::register);
 
+    ForgeLootModifiers.register(EVENT_BUS);
+
     EVENT_BUS.addListener((Consumer<FMLCommonSetupEvent>) event -> SpecterMod.init());
+
+    EVENT_BUS.addListener((Consumer<EntityAttributeCreationEvent>) event -> {
+      event.put(ModEntities.SPECTER, Specter.createAttributes().build());
+    });
 
     MinecraftForge.EVENT_BUS.addListener((Consumer<AddReloadListenerEvent>) event -> {
       event.addListener(new ResourceReloadListener());
+    });
+
+    MinecraftForge.EVENT_BUS.addListener((Consumer<PlayerEvent.PlayerLoggedInEvent>) event -> {
+      if (event.getEntity() instanceof ServerPlayer player) {
+        SpecterEvents.onPlayerLoggedIn(player);
+      }
+    });
+
+    MinecraftForge.EVENT_BUS.addListener((Consumer<PlayerEvent.PlayerLoggedOutEvent>) event -> {
+      if (event.getEntity() instanceof ServerPlayer player) {
+        SpecterEvents.onPlayerLoggedOut(player);
+      }
+    });
+
+    MinecraftForge.EVENT_BUS.addListener((Consumer<EntityJoinLevelEvent>) event -> {
+      if (event.getLevel() instanceof ServerLevel level) {
+        SpecterEvents.onEntityJoin(event.getEntity(), level);
+      }
     });
 
     if (FMLLoader.getDist() == Dist.CLIENT) {
@@ -77,7 +110,7 @@ public class SpecterForge {
 
     @Override
     protected void apply(Void unused, ResourceManager resourceManager, ProfilerFiller profilerFiller) {
-      // ModConfig.load(Services.PLATFORM.getConfigDirectory());
+      ModConfigIO.loadOrInitialize();
     }
 
     @Override
