@@ -1,10 +1,15 @@
 package io.github.jason13official.specter.impl.common.entity;
 
+import io.github.jason13official.specter.impl.common.item.DyeableCondensedSpecterItem;
 import io.github.jason13official.specter.impl.common.registry.ModEntities;
+import io.github.jason13official.specter.impl.common.registry.ModItems;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
@@ -12,8 +17,12 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class Specter extends AbstractSpecter {
@@ -28,7 +37,44 @@ public class Specter extends AbstractSpecter {
   }
 
   public static AttributeSupplier.Builder createAttributes() {
+
     return Mob.createMobAttributes().add(Attributes.ATTACK_DAMAGE);
+  }
+
+  /// enables middle-click / right-click interactions
+  @Override
+  public boolean isPickable() {
+
+    return !this.isRemoved();
+  }
+
+  /// shift + empty main hand converts us into an item
+  @Override
+  protected @NotNull InteractionResult mobInteract(Player player, InteractionHand hand) {
+
+    if (this.getOwner() == player && hand == InteractionHand.MAIN_HAND && player.getItemInHand(hand).isEmpty() && player.isShiftKeyDown()) {
+
+      player.setItemInHand(hand, this.toCondensedItemStack());
+
+      this.discard();
+    }
+
+    return super.mobInteract(player, hand);
+  }
+
+  private ItemStack toCondensedItemStack() {
+
+    ItemStack stack = new ItemStack(ModItems.CONDENSED_SPECTER);
+
+    if (this.getSpecterColor() != DyeableCondensedSpecterItem.DEFAULT_SPECTER_COLOR) {
+      stack.set(DataComponents.DYED_COLOR, new DyedItemColor(this.getSpecterColor(), true));
+    }
+
+    if (this.hasCustomName()) {
+      stack.set(DataComponents.CUSTOM_NAME, this.getCustomName());
+    }
+
+    return stack;
   }
 
   @Override
