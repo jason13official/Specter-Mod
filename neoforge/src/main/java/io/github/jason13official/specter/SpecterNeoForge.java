@@ -10,12 +10,14 @@ import io.github.jason13official.specter.impl.common.registry.ModMenus;
 import io.github.jason13official.specter.impl.common.registry.ModParticles;
 import io.github.jason13official.specter.impl.common.registry.ModTabs;
 import io.github.jason13official.specter.impl.common.registry.ModTiles;
+import io.github.jason13official.specter.impl.common.util.ModConfigIO;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,6 +30,7 @@ import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
@@ -72,6 +75,12 @@ public class SpecterNeoForge {
       }
     });
 
+    NeoForge.EVENT_BUS.addListener((Consumer<EntityJoinLevelEvent>) event -> {
+      if (event.getLevel() instanceof ServerLevel level) {
+        SpecterEvents.onEntityJoin(event.getEntity(), level);
+      }
+    });
+
     if (FMLLoader.getDist() == Dist.CLIENT) {
       new SpecterClientNeoForge(EVENT_BUS);
     }
@@ -96,6 +105,7 @@ public class SpecterNeoForge {
     @Override
     protected void apply(Void unused, ResourceManager resourceManager, ProfilerFiller profilerFiller) {
       // ModConfig.load(Services.PLATFORM.getConfigDirectory());
+      ModConfigIO.loadOrInitialize();
     }
 
     @Override
