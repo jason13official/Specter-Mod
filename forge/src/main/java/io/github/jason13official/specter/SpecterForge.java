@@ -8,6 +8,7 @@ import io.github.jason13official.specter.impl.common.registry.ModEntities;
 import io.github.jason13official.specter.impl.common.registry.ModItems;
 import io.github.jason13official.specter.impl.common.registry.ModMenus;
 import io.github.jason13official.specter.impl.common.registry.ModParticles;
+import io.github.jason13official.specter.impl.common.registry.ModSounds;
 import io.github.jason13official.specter.impl.common.registry.ModTabs;
 import io.github.jason13official.specter.impl.common.registry.ModTiles;
 import io.github.jason13official.specter.impl.common.util.ModConfigIO;
@@ -49,6 +50,7 @@ public class SpecterForge {
     bind(Registries.PARTICLE_TYPE, ModParticles::register);
     bind(Registries.BLOCK_ENTITY_TYPE, ModTiles::register);
     bind(Registries.MENU, ModMenus::register);
+    bind(Registries.SOUND_EVENT, ModSounds::register);
     bind(Registries.CREATIVE_MODE_TAB, ModTabs::register);
 
     ForgeLootModifiers.register(EVENT_BUS);

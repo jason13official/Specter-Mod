@@ -8,6 +8,7 @@ import io.github.jason13official.specter.impl.common.registry.ModEntities;
 import io.github.jason13official.specter.impl.common.registry.ModItems;
 import io.github.jason13official.specter.impl.common.registry.ModMenus;
 import io.github.jason13official.specter.impl.common.registry.ModParticles;
+import io.github.jason13official.specter.impl.common.registry.ModSounds;
 import io.github.jason13official.specter.impl.common.registry.ModTabs;
 import io.github.jason13official.specter.impl.common.registry.ModTiles;
 import io.github.jason13official.specter.impl.common.util.ModConfigIO;
@@ -36,6 +37,7 @@ public class SpecterFabric implements ModInitializer {
     bind(BuiltInRegistries.PARTICLE_TYPE, ModParticles::register);
     bind(BuiltInRegistries.BLOCK_ENTITY_TYPE, ModTiles::register);
     bind(BuiltInRegistries.MENU, ModMenus::register);
+    bind(BuiltInRegistries.SOUND_EVENT, ModSounds::register);
     bind(BuiltInRegistries.CREATIVE_MODE_TAB, ModTabs::register);
 
     SpecterMod.init();

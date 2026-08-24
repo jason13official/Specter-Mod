@@ -3,8 +3,8 @@ package io.github.jason13official.specter.impl.common.entity;
 import io.github.jason13official.specter.impl.common.item.DyeableCondensedSpecterItem;
 import io.github.jason13official.specter.impl.common.registry.ModEntities;
 import io.github.jason13official.specter.impl.common.registry.ModItems;
+import io.github.jason13official.specter.impl.common.registry.ModSounds;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -99,7 +99,8 @@ public class Specter extends AbstractSpecter {
 
     if (!healed) return;
 
-    level.playSound(null, this.blockPosition(), SoundEvents.ALLAY_THROW, SoundSource.AMBIENT, 0.6f, 0.4f);
+    // level.playSound(null, this.blockPosition(), SoundEvents.ALLAY_THROW, SoundSource.AMBIENT, 0.6f, 0.4f);
+    level.playSound(null, this.blockPosition(), ModSounds.SPECTER_SHELL, SoundSource.AMBIENT);
   }
 
   /// lore: Ghosts channel the Traveler's Light to mend flesh and cure poisons;
@@ -128,6 +129,7 @@ public class Specter extends AbstractSpecter {
       owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 5, 0, true, true));
     }
 
-    owner.level().playSound(null, this.blockPosition(), SoundEvents.ALLAY_THROW, SoundSource.AMBIENT, 0.6f, 0.8f);
+    // owner.level().playSound(null, this.blockPosition(), SoundEvents.ALLAY_THROW, SoundSource.AMBIENT, 0.6f, 0.8f);
+    owner.level().playSound(null, this.blockPosition(), ModSounds.SPECTER_SHELL, SoundSource.AMBIENT);
   }
 }
