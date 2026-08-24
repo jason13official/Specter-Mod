@@ -1,7 +1,7 @@
 {
   "parent": "minecraft:item/handheld",
   "textures": {
-    "layer0": "specter:item/condensed_specter"
+    "layer0": "specter:item/specter_core"
   },
   "display": {
     "thirdperson_righthand": {
