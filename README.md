@@ -1,32 +1,62 @@
-# MultiLoader Template
+## **Specter**
 
-This project provides a Gradle project template that can compile Minecraft mods for multiple modloaders using a common project for the sources. This project does not require any third party libraries or dependencies. If you have any questions or want to discuss the project, please join our [Discord](https://discord.myceliummod.network).
+A Specter is the equivalent to a "Ghost" from the videogame Destiny (2014); they follow the player, guarding them from death and healing them when the player's health is low, or removing toxins (Poison).
 
-## Getting Started
+## Getting a Specter
 
-### IntelliJ IDEA
-This guide will show how to import the MultiLoader Template into IntelliJ IDEA. The setup process is roughly equivalent to setting up the modloaders independently and should be very familiar to anyone who has worked with their MDKs.
+1. Find a **Specter Core** in a Jungle Pyramid or Desert Temple.
+2. Craft a **Condensed Specter** with a Specter Core, copper ingots, and some wool.
+3. **Right-click** with the item in hand to summon your Specter!
 
-1. Clone or download this repository to your computer.
-2. Configure the project by setting the properties in the `gradle.properties` file. You will also need to change the `rootProject.name`  property in `settings.gradle`, this should match the folder name of your project, or else IDEA may complain.
-3. Open the template's root folder as a new project in IDEA. This is the folder that contains this README.md file and the gradlew executable.
-4. If your default JVM/JDK is not Java 21 you will encounter an error when opening the project. This error is fixed by going to `File > Settings > Build, Execution, Deployment > Build Tools > Gradle > Gradle JVM` and changing the value to a valid Java 21 JVM. You will also need to set the Project SDK to Java 21. This can be done by going to `File > Project Structure > Project SDK`. Once both have been set open the Gradle tab in IDEA and click the refresh button to reload the project.
-5. Open your Run/Debug Configurations. Under the `Application` category there should now be options to run Fabric and NeoForge projects. Select one of the client options and try to run it.
-6. Assuming you were able to run the game in step 5 your workspace should now be set up.
+<br />
 
-### Eclipse
-While it is possible to use this template in Eclipse it is not recommended. During the development of this template multiple critical bugs and quirks related to Eclipse were found at nearly every level of the required build tools. While we continue to work with these tools to report and resolve issues support for projects like these are not there yet. For now Eclipse is considered unsupported by this project. The development cycle for build tools is notoriously slow so there are no ETAs available.
+## Behavior
 
-## Development Guide
-When using this template the majority of your mod should be developed in the `common` project. The `common` project is compiled against the vanilla game and is used to hold code that is shared between the different loader-specific versions of your mod. The `common` project has no knowledge or access to ModLoader specific code, apis, or concepts. Code that requires something from a specific loader must be done through the project that is specific to that loader, such as the `fabric` or `neoforge` projects.
+* Prevents the player from dying (under most circumstances).
+* Heals the player quickly when their health drops too low (below half).
+* Zombies/Husk/Drowned have a percent chance to spawn with a Specter (configurable)
+* The Condensed Specter can be dyed like leather armor, or renamed in an anvil!
 
-Loader specific projects such as the `fabric` and `neoforge` project are used to load the `common` project into the game. These projects also define code that is specific to that loader. Loader specific projects can access all the code in the `common` project. It is important to remember that the `common` project can not access code from loader specific projects.
+## Notes
 
-## Removing Platforms and Loaders
-While this template has support for many modloaders, new loaders may appear in the future, and existing loaders may become less relevant.
+Suggestions are welcome! Please leave a comment with any ideas/issues you have!
 
-Removing loader specific projects is as easy as deleting the folder, and removing the `include("projectname")` line from the `settings.gradle` file.
-For example if you wanted to remove support for `forge` you would follow the following steps:
+The current project icon (October 21, 2025 - Present) is by "DR," originally posted to Amino Apps and found via Google Search.
 
-1. Delete the subproject folder. For example, delete `MultiLoader-Template/forge`.
-2. Remove the project from `settings.gradle`. For example, remove `include("forge")`. 
+This mod was created for CurseForge's "Forge the Future: Minecraft ModJam 2025."
+
+<!-- Art used for the current project icon (October 21st, 2025 - Present) belongs to "DR", posted to Amino Apps and found through Google Search.
+
+"Specters," the mod's equivalent of Ghosts from Destiny, can be crafted as Condensed Specter items with Specter Cores (found in Jungle Pyramids and Desert Temples), Copper Ingots, and wool of your choice. Right-clicking with a Condensed Specter item in hand will summon the Specter into the world. (This will be re-worked in future updates)
+
+Specters prevent the player from dying (under most circumstances), and are quick to heal the player if their health is too far below full.
+
+Updates are planned! Please leave a comment with any suggestions!
+
+1.1.0 added dyeing the Condensed Specter item more colors, Monsters spawning with Specters attached after day 10 (this might be removed, or disabled by default in config), and overhauled the recipes/items in general. Btw, you can also rename the Condensed Specter item in an anvil to give your Specter a custom name
+
+Some ideas I'm playing around with right now:
+
+*   Different tiers based on crafting ingredients (iron/diamond/etc.)
+*   Healing scales directly with tier
+*   Cooldown after preventing player death
+*   Only attackable with projectiles? And re-do some targeting (like Hoglins)
+*   Keybind to summon/dismiss your Specter? (should only 1 be allowed?)
+*   Personalities!
+*   Overhauled crafting (Resonance + ForgeEnergy/FE ?)
+*   Fragmented Datapad (lore/tutorials built-in)
+*   Retrocausality Engine (produces Resonance)
+*   Specter Resonator (consumes Resonance), attunes Inert Specter Core -> Specter Core
+*   Shell Fabricator (consumes FE), produces Specter Shells (optional customization)
+*   Specter Core/Shell/Shield Augmentation
+*   Shield Harmonizer, resonate with internal Shield Module to align to protective frequency
+*   Specter Synthesis (consumes Resonance+FE), combines Specter Core with Specter Shell to form new Condensed Specter Item / Specter owned by player
+
+Implementation Phases?
+
+*   Core
+*   Progression
+*   Polish
+*   Polish+
+
+(This mod was created for CurseForge's "Forge the Future: Minecraft ModJam 2025") -->
