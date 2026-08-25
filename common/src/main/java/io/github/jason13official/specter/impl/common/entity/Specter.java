@@ -5,9 +5,7 @@ import io.github.jason13official.specter.impl.common.registry.ModEntities;
 import io.github.jason13official.specter.impl.common.registry.ModItems;
 import io.github.jason13official.specter.impl.common.registry.ModSounds;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -22,7 +20,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,11 +50,12 @@ public class Specter extends AbstractSpecter {
   @Override
   protected @NotNull InteractionResult mobInteract(Player player, InteractionHand hand) {
 
-    if (this.getOwner() == player && hand == InteractionHand.MAIN_HAND && player.getItemInHand(hand).isEmpty() && player.isShiftKeyDown()) {
+    if (this.getOwner() == player && hand == InteractionHand.MAIN_HAND && player.getItemInHand(hand).isEmpty()) {
 
-      player.setItemInHand(hand, this.toCondensedItemStack());
-
-      this.discard();
+      if (player.isShiftKeyDown()) {
+        player.setItemInHand(hand, this.toCondensedItemStack());
+        this.discard();
+      }
     }
 
     return super.mobInteract(player, hand);
@@ -84,15 +82,21 @@ public class Specter extends AbstractSpecter {
 
     if (this.tickCount % 20 == 0) {
       healOwner();
-      if (this.tickCount % 40 == 0) healSelf();
+      if (this.tickCount % 40 == 0) {
+        healSelf();
+      }
     }
   }
 
   /// so our ghosts don't slowly die over time without healing
   private void healSelf() {
 
-    if (!(this.level() instanceof ServerLevel level)) return;
-    if (this.isDeadOrDying()) return;
+    if (!(this.level() instanceof ServerLevel level)) {
+      return;
+    }
+    if (this.isDeadOrDying()) {
+      return;
+    }
 
     boolean healed = false;
 
@@ -101,20 +105,29 @@ public class Specter extends AbstractSpecter {
       healed = true;
     }
 
-    if (!healed) return;
+    if (!healed) {
+      return;
+    }
 
     // level.playSound(null, this.blockPosition(), SoundEvents.ALLAY_THROW, SoundSource.AMBIENT, 0.6f, 0.4f);
     level.playSound(null, this.blockPosition(), ModSounds.SPECTER_SHELL, SoundSource.AMBIENT);
   }
 
-  /// lore: Ghosts channel the Traveler's Light to mend flesh and cure poisons;
-  /// only while close enough to be "shielding" the owner
+  /// lore: Ghosts channel the Traveler's Light to mend flesh and cure poisons; only while close enough to be "shielding" the owner
   private void healOwner() {
 
-    if (!(this.level() instanceof ServerLevel)) return;
-    if (!(this.getOwner() instanceof LivingEntity owner)) return;
-    if (owner.isDeadOrDying()) return;
-    if (this.distanceTo(owner) >= 4.0f) return;
+    if (!(this.level() instanceof ServerLevel)) {
+      return;
+    }
+    if (!(this.getOwner() instanceof LivingEntity owner)) {
+      return;
+    }
+    if (owner.isDeadOrDying()) {
+      return;
+    }
+    if (this.distanceTo(owner) >= 4.0f) {
+      return;
+    }
 
     boolean healed = false;
 
@@ -127,7 +140,9 @@ public class Specter extends AbstractSpecter {
       healed = true;
     }
 
-    if (!healed) return;
+    if (!healed) {
+      return;
+    }
 
     if (!owner.hasEffect(MobEffects.DAMAGE_RESISTANCE)) {
       owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 5, 0, true, true));
