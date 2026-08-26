@@ -1,6 +1,5 @@
 package io.github.jason13official.specter.impl.client.screen;
 
-import io.github.jason13official.specter.SpecterMod;
 import io.github.jason13official.specter.impl.common.entity.AbstractSpecter;
 import io.github.jason13official.specter.impl.common.menu.SpecterMenu;
 import io.github.jason13official.specter.impl.common.network.SpecterNetworking;
@@ -11,34 +10,40 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Inventory;
 import org.lwjgl.glfw.GLFW;
 
 public class SpecterScreen extends AbstractContainerScreen<SpecterMenu> {
 
-  public static final ResourceLocation TEXTURE = SpecterMod.identifier("textures/gui/specter.png");
+  public static final int PORTRAIT_SIZE = 90;
+  public static final int PORTRAIT_SCALE = 130;
 
-  public static final int PORTRAIT_X = 8;
-  public static final int PORTRAIT_Y = 20;
-  public static final int PORTRAIT_SIZE = 64;
-  public static final int PORTRAIT_SCALE = 120;
-
-  public static final int STATS_X = 84;
-  public static final int STATS_Y = 24;
-  public static final int LINE_HEIGHT = 12;
-
-  public static final int NAME_BOX_Y = 108;
+  public static final int NAME_BOX_WIDTH = 160;
   public static final int NAME_BOX_HEIGHT = 16;
 
+  public static final int STATS_WIDTH = 130;
+  public static final int LINE_HEIGHT = 12;
+
+  private static final int PANEL_FILL = 0xB2101820;
+  private static final int PANEL_ACCENT = 0xFF4FD4FF;
+  private static final int PANEL_BORDER = 0x804FD4FF;
+
   private EditBox nameBox;
+
+  private int portraitCenterX;
+  private int portraitCenterY;
+  private int statsX;
+  private int statsY;
+  private int statsHeight;
 
   public SpecterScreen(SpecterMenu menu, Inventory playerInventory, Component title) {
     super(menu, playerInventory, title);
 
-    this.imageWidth = 200;
-    this.imageHeight = 166;
+    // no panel art anymore; keep a nominal footprint so vanilla's container-screen bookkeeping
+    // (leftPos/topPos, click-outside handling) still has sane values
+    this.imageWidth = 240;
+    this.imageHeight = 200;
   }
 
   @Override
@@ -48,15 +53,26 @@ public class SpecterScreen extends AbstractContainerScreen<SpecterMenu> {
 
     AbstractSpecter specter = this.menu.getSpecter();
 
-    this.nameBox = new EditBox(this.font, this.leftPos + 8, this.topPos + NAME_BOX_Y, this.imageWidth - 16, NAME_BOX_HEIGHT, Component.translatable("gui.specter.name"));
+    this.portraitCenterX = this.width / 2;
+    this.portraitCenterY = this.height / 2 - 30;
+
+    int nameBoxX = this.portraitCenterX - NAME_BOX_WIDTH / 2;
+    int nameBoxY = this.portraitCenterY + PORTRAIT_SIZE / 2 + 20;
+
+    this.nameBox = new EditBox(this.font, nameBoxX, nameBoxY, NAME_BOX_WIDTH, NAME_BOX_HEIGHT, Component.translatable("gui.specter.name"));
     this.nameBox.setMaxLength(SpecterNetworking.MAX_NAME_LENGTH);
     this.nameBox.setValue(specter != null && specter.hasCustomName() ? specter.getName().getString() : "");
     this.nameBox.setEditable(specter != null);
     this.addRenderableWidget(this.nameBox);
 
-    Button renameButton = Button.builder(Component.translatable("gui.specter.rename"), button -> this.onRename()).bounds(this.leftPos + (this.imageWidth - 80) / 2, this.topPos + 130, 80, 20).build();
+    Button renameButton = Button.builder(Component.translatable("gui.specter.rename"), button -> this.onRename())
+        .bounds(this.portraitCenterX - 40, nameBoxY + NAME_BOX_HEIGHT + 8, 80, 20).build();
     renameButton.active = specter != null;
     this.addRenderableWidget(renameButton);
+
+    this.statsHeight = 14 + LINE_HEIGHT * 4 + 8;
+    this.statsX = this.portraitCenterX + PORTRAIT_SIZE / 2 + 30;
+    this.statsY = this.portraitCenterY - this.statsHeight / 2;
   }
 
   private void onRename() {
@@ -92,42 +108,60 @@ public class SpecterScreen extends AbstractContainerScreen<SpecterMenu> {
   @Override
   protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
 
-    guiGraphics.blit(TEXTURE, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
+    this.renderBackground(guiGraphics);
 
     AbstractSpecter specter = this.menu.getSpecter();
 
     if (specter == null) {
-      guiGraphics.drawString(this.font, Component.translatable("gui.specter.missing"), this.leftPos + STATS_X, this.topPos + STATS_Y, 0x404040, false);
+      guiGraphics.drawCenteredString(this.font, Component.translatable("gui.specter.missing"), this.portraitCenterX, this.portraitCenterY, 0xFFFFFF);
       return;
     }
 
-    int portraitCenterX = this.leftPos + PORTRAIT_X + PORTRAIT_SIZE / 2;
-    int portraitFeetY = this.topPos + PORTRAIT_Y + PORTRAIT_SIZE - 6;
-    InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, portraitCenterX, portraitFeetY, PORTRAIT_SCALE, (float) portraitCenterX - mouseX,
-        (float) (portraitFeetY - PORTRAIT_SIZE / 2) - mouseY, specter);
+    int portraitFeetY = this.portraitCenterY + PORTRAIT_SIZE / 2 - 6;
+    // pitch reference is portraitCenterY (where the model visually sits), not a feet-anchored
+    // offset like vanilla's player portrait -> Specter's model renders centered in its box
+    InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, this.portraitCenterX, portraitFeetY, PORTRAIT_SCALE, (float) this.portraitCenterX - mouseX,
+        ((float) this.portraitCenterY - mouseY) + 12.0f, specter);
 
-    int x = this.leftPos + STATS_X;
-    int y = this.topPos + STATS_Y;
+    this.drawFloatingPanel(guiGraphics, this.statsX, this.statsY, STATS_WIDTH, this.statsHeight);
+
+    int x = this.statsX + 8;
+    int y = this.statsY + 8;
 
     Component owner = specter.getOwner() != null ? specter.getOwner().getName() : Component.translatable("gui.specter.no_owner");
-    guiGraphics.drawString(this.font, Component.translatable("gui.specter.owner", owner), x, y, 0x404040, false);
+    guiGraphics.drawString(this.font, Component.translatable("gui.specter.owner", owner), x, y, 0xE0E0E0, false);
 
     int health = Math.round(specter.getHealth());
     int maxHealth = Math.round(specter.getMaxHealth());
-    guiGraphics.drawString(this.font, Component.translatable("gui.specter.health", health, maxHealth), x, y + LINE_HEIGHT, 0x404040, false);
+    guiGraphics.drawString(this.font, Component.translatable("gui.specter.health", health, maxHealth), x, y + LINE_HEIGHT, 0xE0E0E0, false);
 
     int attackDamage = (int) specter.getAttributeValue(Attributes.ATTACK_DAMAGE);
-    guiGraphics.drawString(this.font, Component.translatable("gui.specter.attack_damage", attackDamage), x, y + LINE_HEIGHT * 2, 0x404040, false);
+    guiGraphics.drawString(this.font, Component.translatable("gui.specter.attack_damage", attackDamage), x, y + LINE_HEIGHT * 2, 0xE0E0E0, false);
 
-    guiGraphics.drawString(this.font, Component.translatable("gui.specter.color"), x, y + LINE_HEIGHT * 3, 0x404040, false);
+    guiGraphics.drawString(this.font, Component.translatable("gui.specter.color"), x, y + LINE_HEIGHT * 3, 0xE0E0E0, false);
     int swatchX = x + this.font.width(Component.translatable("gui.specter.color")) + 6;
     int swatchY = y + LINE_HEIGHT * 3;
     guiGraphics.fill(swatchX, swatchY, swatchX + 8, swatchY + 8, 0xFF000000 | specter.getSpecterColor());
   }
 
+  /// translucent dark card with a bright top accent edge, dim cyan border on the rest; used for
+  /// the stats module so it reads as a floating HUD element rather than vanilla inventory chrome
+  private void drawFloatingPanel(GuiGraphics guiGraphics, int x, int y, int width, int height) {
+
+    guiGraphics.fill(x, y, x + width, y + height, PANEL_FILL);
+    guiGraphics.fill(x, y, x + width, y + 2, PANEL_ACCENT);
+    guiGraphics.fill(x, y, x + 1, y + height, PANEL_BORDER);
+    guiGraphics.fill(x + width - 1, y, x + width, y + height, PANEL_BORDER);
+    guiGraphics.fill(x, y + height - 1, x + width, y + height, PANEL_BORDER);
+  }
+
+  /// called inside a pose already translated by (leftPos, topPos); portraitCenterX/Y are
+  /// screen-absolute, so subtract that offset back out here
   @Override
   protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
 
-    guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 0x404040, false);
+    // int x = this.portraitCenterX - this.leftPos;
+    // int y = this.portraitCenterY - PORTRAIT_SIZE / 2 - 16 - this.topPos;
+    // guiGraphics.drawCenteredString(this.font, this.title, x, y, PANEL_ACCENT);
   }
 }
