@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 
 public class SpecterRenderer extends EntityRenderer<Specter> implements RenderLayerParent<Specter, EntityModel<Specter>> {
@@ -52,8 +53,9 @@ public class SpecterRenderer extends EntityRenderer<Specter> implements RenderLa
     poseStack.pushPose();
 
     // BoatRenderer mimics
+    float bodyYaw = Mth.rotLerp(partialTick, specter.yBodyRotO, specter.yBodyRot);
     poseStack.translate(0.0F, 0.0625f, 0.0F);
-    poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - entityYaw));
+    poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - bodyYaw));
     poseStack.mulPose(Axis.XP.rotationDegrees(180.0f - specter.getViewXRot(1.0f)));
     poseStack.scale(-1.0F, -1.0F, 1.0F);
     this.getModel().setupAnim(specter, partialTick, 0.0F, -0.1F, 0.0F, 0.0F);

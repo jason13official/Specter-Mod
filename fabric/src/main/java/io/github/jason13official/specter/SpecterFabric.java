@@ -3,6 +3,7 @@ package io.github.jason13official.specter;
 import io.github.jason13official.specter.impl.common.entity.Specter;
 import io.github.jason13official.specter.impl.common.event.SpecterEvents;
 import io.github.jason13official.specter.impl.common.loot.FabricLootModifiers;
+import io.github.jason13official.specter.impl.common.network.SpecterNetworking;
 import io.github.jason13official.specter.impl.common.registry.ModBlocks;
 import io.github.jason13official.specter.impl.common.registry.ModEntities;
 import io.github.jason13official.specter.impl.common.registry.ModItems;
@@ -17,6 +18,7 @@ import java.util.function.Consumer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
@@ -50,6 +52,11 @@ public class SpecterFabric implements ModInitializer {
     ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> SpecterEvents.onPlayerLoggedOut(handler.getPlayer()));
 
     ServerEntityEvents.ENTITY_LOAD.register(SpecterEvents::onEntityJoin);
+
+    ServerPlayNetworking.registerGlobalReceiver(SpecterNetworking.RENAME_SPECTER_PACKET, (server, player, handler, buf, responseSender) -> {
+      String name = buf.readUtf(SpecterNetworking.MAX_NAME_LENGTH);
+      server.execute(() -> SpecterNetworking.handleRenameSpecter(player, name));
+    });
 
     FabricLootModifiers.register();
   }

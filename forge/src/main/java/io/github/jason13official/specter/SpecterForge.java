@@ -12,6 +12,7 @@ import io.github.jason13official.specter.impl.common.registry.ModSounds;
 import io.github.jason13official.specter.impl.common.registry.ModTabs;
 import io.github.jason13official.specter.impl.common.registry.ModTiles;
 import io.github.jason13official.specter.impl.common.util.ModConfigIO;
+import io.github.jason13official.specter.network.SpecterNetworkForge;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import net.minecraft.core.Registry;
@@ -54,6 +55,8 @@ public class SpecterForge {
     bind(Registries.CREATIVE_MODE_TAB, ModTabs::register);
 
     ForgeLootModifiers.register(EVENT_BUS);
+
+    SpecterNetworkForge.register();
 
     EVENT_BUS.addListener((Consumer<FMLCommonSetupEvent>) event -> SpecterMod.init());
 

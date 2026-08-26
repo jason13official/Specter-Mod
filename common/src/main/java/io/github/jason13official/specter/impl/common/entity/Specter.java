@@ -1,6 +1,7 @@
 package io.github.jason13official.specter.impl.common.entity;
 
 import io.github.jason13official.specter.impl.common.item.DyeableCondensedSpecterItem;
+import io.github.jason13official.specter.impl.common.menu.SpecterMenu;
 import io.github.jason13official.specter.impl.common.registry.ModEntities;
 import io.github.jason13official.specter.impl.common.registry.ModItems;
 import io.github.jason13official.specter.impl.common.registry.ModSounds;
@@ -8,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
@@ -45,7 +47,8 @@ public class Specter extends AbstractSpecter {
     return !this.isRemoved();
   }
 
-  /// shift + empty main hand converts us into an item
+  /// shift + empty main hand converts us into an item;
+  /// a plain right-click opens the specter's menu instead
   @Override
   protected @NotNull InteractionResult mobInteract(Player player, InteractionHand hand) {
 
@@ -54,6 +57,8 @@ public class Specter extends AbstractSpecter {
       if (player.isShiftKeyDown()) {
         player.setItemInHand(hand, this.toCondensedItemStack());
         this.discard();
+      } else if (!this.level().isClientSide) {
+        player.openMenu(new SimpleMenuProvider((id, inv, p) -> new SpecterMenu(id, inv), this.getDisplayName()));
       }
     }
 

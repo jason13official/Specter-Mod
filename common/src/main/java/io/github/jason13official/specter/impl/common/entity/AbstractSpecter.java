@@ -129,8 +129,11 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
 
   /// search near ownerId's last known position;
   /// relies on [AbstractSpecter#teleportToOwner] keeping Specter near its owner
+  ///
+  /// accept `Level` rather than `ServerLevel` so it can resolve client-side
+  /// (e.g. for `SpecterMenu`)
   @Nullable
-  public static AbstractSpecter findOwned(ServerLevel level, LivingEntity owner) {
+  public static AbstractSpecter findOwned(Level level, LivingEntity owner) {
 
     List<AbstractSpecter> found = level.getEntities(EntityTypeTest.forClass(AbstractSpecter.class),
         owner.getBoundingBox().inflate(32.0D), specter -> owner.getUUID().equals(specter.getOwnerId().orElse(null)));
