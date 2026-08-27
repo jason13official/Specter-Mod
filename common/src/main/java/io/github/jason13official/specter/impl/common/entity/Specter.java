@@ -213,10 +213,20 @@ public class Specter extends AbstractSpecter {
       return;
     }
 
-    LivingEntity lastAttacker = owner.getLastHurtByMob();
-    if (isValidAttackTarget(lastAttacker, owner)) {
-      if (lastAttacker != this.getTarget()) {
-        this.setAttackTarget(lastAttacker);
+    // redirect to the last mob that hurt us
+    LivingEntity selfLastAttacker = this.getLastHurtByMob();
+    if (isValidAttackTarget(selfLastAttacker, owner)) {
+      if (selfLastAttacker != this.getTarget()) {
+        this.setAttackTarget(selfLastAttacker);
+        this.attackCooldown = ATTACK_INTERVAL;
+      }
+      return;
+    }
+
+    LivingEntity ownerLastAttacker = owner.getLastHurtByMob();
+    if (isValidAttackTarget(ownerLastAttacker, owner)) {
+      if (ownerLastAttacker != this.getTarget()) {
+        this.setAttackTarget(ownerLastAttacker);
         this.attackCooldown = ATTACK_INTERVAL;
       }
       return;
@@ -243,6 +253,29 @@ public class Specter extends AbstractSpecter {
     if (target.level() != this.level()) return false;
     if (owner.distanceToSqr(target) > ATTACK_RANGE * ATTACK_RANGE) return false;
 
+    // fail if similar entities that are not players are targeting each other
+    // e.g. zombie-owned specters don't attack other zombies
+    if (target.getType() == owner.getType() && owner.getType() != EntityType.PLAYER) {
+      return false;
+    }
+
+    // fail if we're targeting a specter and not owned by a player
+    // e.g. zombie owned specters don't attack other specters
+    // TODO should zombie specters attack our specter? yes... fixed?
+    // if (target.getType() == ModEntities.SPECTER && owner.getType() != EntityType.PLAYER) {
+    if (target instanceof AbstractSpecter specter) {
+      // we are targeting another specter
+      // specter-on-specter combat beams
+
+      Entity targetOwner = specter.getOwner();
+
+      if (targetOwner != null && targetOwner.getType() != EntityType.PLAYER) {
+        // our specter opponent has an owner, but the owner is not a player
+
+        return false;
+      }
+    }
+
     return this.hasLineOfSight(target);
   }
 
@@ -261,7 +294,9 @@ public class Specter extends AbstractSpecter {
     }
 
     float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
-    target.hurt(this.damageSources().indirectMagic(this, this), damage);
+    if (target.hurt(this.damageSources().indirectMagic(this, this), damage)) {
+      target.setLastHurtByMob(this); // manual set if we actually hurt
+    }
 
     if (this.level() instanceof ServerLevel level) {
       level.playSound(null, this.blockPosition(), ModSounds.SPECTER_BEAM, SoundSource.NEUTRAL);
