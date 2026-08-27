@@ -166,20 +166,44 @@ public class SpecterRenderer extends EntityRenderer<Specter> implements RenderLa
 //    poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - bodyYaw)); // enables left/right turning
 //    poseStack.mulPose(Axis.XP.rotationDegrees(180.0f - specter.getViewXRot(1.0f))); // flip around our specter to face forward
 
+    // establish the rotation pivot (bounding-box center) in untransformed render space,
+    // before the scale/rotation mangling ->
+    // putting it after `scale(-1,-1,1)` inverts its effective direction;
+    // the model renders below the bounding box instead of centered on it.
+    //
+    // putting it after the rotations made it swing through an arc as pitch changed
+    // (a point on the Y axis doesn't move under a Y-axis/yaw rotation, invisible with yaw
+    // and only showing up once attack-pitch got involved). anchoring it here, first, means
+    // scale/rotate can't touch the pivot's own position -> they only affect what's drawn around it
+    poseStack.translate(0.0F, 0.0625f * 3.0f, 0.0F);
+
     poseStack.scale(-1.0F, -1.0F, 1.0F); // ?????
 
-    // rotate yaw to face view direction (notice we are subtracting from 180.0F here,
-    // which inverts the rotation. why? I have no clue.)
-    float bodyYaw = Mth.rotLerp(partialTick, specter.yBodyRotO, specter.yBodyRot);
+    float bodyYaw;
+    float pitch;
+
+    LivingEntity attackTarget = specter.hasActiveAttackTarget() ? specter.getActiveAttackTarget() : null;
+
+    if (attackTarget != null) {
+
+      // same yaw/pitch stuff as Entity#lookAt, recalc every frame based on
+      // lerped positions rather than capped stored rotation amount
+      // (so we face the same way as our beam attack)
+      double eyeY = specter.getEyeY();
+      Vec3 from = getRenderPos(specter, eyeY, partialTick);
+      Vec3 to = getRenderPos(attackTarget, attackTarget.getBbHeight() * 0.5, partialTick);
+      Vec3 diff = to.subtract(from);
+      double horizontalDist = Math.sqrt(diff.x * diff.x + diff.z * diff.z);
+
+      bodyYaw = (float) (Mth.atan2(diff.z, diff.x) * (180D / Math.PI)) - 90.0F;
+      pitch = (float) (-(Mth.atan2(diff.y, horizontalDist) * (180D / Math.PI)));
+    } else {
+      bodyYaw = Mth.rotLerp(partialTick, specter.yBodyRotO, specter.yBodyRot);
+      pitch = specter.getViewXRot(1.0f);
+    }
+
     poseStack.mulPose(Axis.YP.rotationDegrees(bodyYaw)); // enables left/right turning
-
-    // rotate pitch to match view direction (notice we are not subtracting from 180.0F here,
-    // instead using a negative value. why? I have no clue.)
-    poseStack.mulPose(Axis.XP.rotationDegrees(180.0F - specter.getViewXRot(1.0f))); // enables up/down turning
-
-    // translate the model upwards by half it's height to re-center
-    // in the bounding box
-    poseStack.translate(0.0F, 0.0625f * 3.0f, 0.0F);
+    poseStack.mulPose(Axis.XP.rotationDegrees(180.0F - pitch)); // enables up/down turning
 
     renderer.getModel().setupAnim(specter, partialTick, 0.0F, -0.1F, 0.0F, 0.0F);
 
