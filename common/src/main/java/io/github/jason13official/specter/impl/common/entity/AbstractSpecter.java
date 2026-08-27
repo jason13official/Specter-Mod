@@ -16,6 +16,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -53,6 +54,25 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
   }
 
   // region apiStuff
+
+
+  @Override
+  public float getEyeHeight(Pose pose) {
+
+    return this.getBbHeight() / 2.0f;
+  }
+
+  @Override
+  public double getEyeY() {
+
+    return this.getBbHeight() / 2.0f;
+  }
+
+  @Override
+  protected float getStandingEyeHeight(Pose pose, EntityDimensions dimensions) {
+
+    return this.getBbHeight() / 2.0f;
+  }
 
   @Override
   protected void defineSynchedData() {

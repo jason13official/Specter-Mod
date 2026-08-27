@@ -68,11 +68,25 @@ public class CubeCompanionRenderer extends EntityRenderer<CubeCompanion> impleme
     poseStack.pushPose();
 
     // BoatRenderer mimics
-//    float bodyYaw = Mth.rotLerp(partialTick, specter.yBodyRotO, specter.yBodyRot);
-//    poseStack.translate(0.0F, 0.0625f, 0.0F); // ?????
-//    poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - bodyYaw)); // enables left/right turning
-//    poseStack.mulPose(Axis.XP.rotationDegrees(180.0f - specter.getViewXRot(1.0f))); // flip around our specter to face forward
-//    poseStack.scale(-1.0F, -1.0F, 1.0F); // ?????
+//    poseStack.translate(0.0F, 0.0625f, 0.0F); // specific to boat model?
+
+    // rotate yaw to face view direction (notice we are subtracting from 180.0F here,
+    // which inverts the rotation. why? I have no clue.)
+    float bodyYaw = Mth.rotLerp(partialTick, specter.yBodyRotO, specter.yBodyRot);
+    poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - bodyYaw)); // enables left/right turning
+
+    // rotate pitch to match view direction (notice we are not subtracting from 180.0F here,
+    // instead using a negative value. why? I have no clue.)
+     poseStack.mulPose(Axis.XP.rotationDegrees(-specter.getViewXRot(1.0f))); // enables up/down turning
+
+    // invert x and y axes so textures display properly
+    poseStack.scale(-1.0F, -1.0F, 1.0F);
+
+    // translate the model upwards by half it's height to re-center
+    // in the bounding box
+    poseStack.translate(0.0F, 0.0625f * -8.0f, 0.0F);
+
+
     renderer.getModel().setupAnim(specter, partialTick, 0.0F, -0.1F, 0.0F, 0.0F);
 
     ResourceLocation texture = renderer.getTextureLocation(specter);
