@@ -197,7 +197,7 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
 
     floatTowardsOwner();
 
-    lookAtOwner();
+    lookAtFocus();
 
     if (this.level() instanceof ServerLevel level && this.owner == null) {
 
@@ -287,7 +287,7 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
   /// `LivingEntity#tick` derives the `yRot` param from movement heading (`xo`/`zo` delta), not
   /// `getYRot()` -> when barely translating (Specter floating while a close owner circles it) it
   /// just passes back the current `yBodyRot`, so any delta against that param is always ~0. Read
-  /// `getYRot()` directly instead, which is what `lookAtOwner()` actually points at the owner
+  /// `getYRot()` directly instead, which is what `lookAtFocus()` actually points at the focus
   @Override
   protected float tickHeadTurn(float yRot, float animStep) {
 
@@ -298,21 +298,31 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
     return animStep;
   }
 
-  /// server-authoritative; the client interpolates rotation
+  /// server-authoritative; the client interpolates rotation.
+  /// looks at whatever [AbstractSpecter#getLookFocus] returns -> normally the owner, but subclasses
+  /// (e.g. [Specter] mid-attack) can redirect this at an attack target instead
   /// TODO pitch (x-axis) rotation seems to halt during creative flight/ at odd angles sometimes
-  private void lookAtOwner() {
+  private void lookAtFocus() {
 
     if (!(this.level() instanceof ServerLevel)) return;
-    if (this.owner == null) return;
+
+    LivingEntity focus = this.getLookFocus();
+    if (focus == null) return;
 
     float maxRotDegrees = 8.0f;
 
-    Vec3 toOwner = new Vec3(this.owner.getX() - this.getX(), this.owner.getY() + this.owner.getEyeHeight() + 0.25 - this.getY(), this.owner.getZ() - this.getZ());
-    if (toOwner.lengthSqr() > 16.0) {
+    Vec3 toFocus = new Vec3(focus.getX() - this.getX(), focus.getY() + focus.getEyeHeight() + 0.25 - this.getY(), focus.getZ() - this.getZ());
+    if (toFocus.lengthSqr() > 16.0) {
       maxRotDegrees = 16.0f;
     }
 
-    this.lookAt(this.owner, maxRotDegrees, maxRotDegrees);
+    this.lookAt(focus, maxRotDegrees, maxRotDegrees);
+  }
+
+  /// @see AbstractSpecter#lookAtFocus()
+  protected @Nullable LivingEntity getLookFocus() {
+
+    return this.owner;
   }
 
   /// discards this instance and spawns a fresh one in the owner's level, carrying over full NBT;
