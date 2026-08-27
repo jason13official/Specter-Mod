@@ -259,22 +259,22 @@ public class Specter extends AbstractSpecter {
       return false;
     }
 
-    // fail if we're targeting a specter and not owned by a player
-    // e.g. zombie owned specters don't attack other specters
-    // TODO should zombie specters attack our specter? yes... fixed?
-    // if (target.getType() == ModEntities.SPECTER && owner.getType() != EntityType.PLAYER) {
-    if (target instanceof AbstractSpecter specter) {
-      // we are targeting another specter
-      // specter-on-specter combat beams
-
-      Entity targetOwner = specter.getOwner();
-
-      if (targetOwner != null && targetOwner.getType() != EntityType.PLAYER) {
-        // our specter opponent has an owner, but the owner is not a player
-
-        return false;
-      }
-    }
+//    // fail if we're targeting a specter and not owned by a player
+//    // e.g. zombie owned specters don't attack other specters
+//    // TODO should zombie specters attack our specter? yes... fixed?
+//    // if (target.getType() == ModEntities.SPECTER && owner.getType() != EntityType.PLAYER) {
+//    if (target instanceof AbstractSpecter specter) {
+//      // we are targeting another specter
+//      // specter-on-specter combat beams
+//
+//      Entity targetOwner = specter.getOwner();
+//
+//      if (targetOwner != null && targetOwner.getType() != EntityType.PLAYER) {
+//        // our specter opponent has an owner, but the owner is not a player
+//
+//        return false;
+//      }
+//    }
 
     return this.hasLineOfSight(target);
   }
