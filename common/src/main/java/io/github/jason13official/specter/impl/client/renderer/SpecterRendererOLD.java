@@ -18,7 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 
-public class SpecterRenderer extends EntityRenderer<Specter> implements RenderLayerParent<Specter, EntityModel<Specter>> {
+public class SpecterRendererOLD extends EntityRenderer<Specter> implements RenderLayerParent<Specter, EntityModel<Specter>> {
 
   public static final ResourceLocation TEXTURE_LOCATION = SpecterMod.identifier("textures/entity/specter.png");
 
@@ -27,7 +27,7 @@ public class SpecterRenderer extends EntityRenderer<Specter> implements RenderLa
   ModelPart root;
   private SpecterModel model;
 
-  public SpecterRenderer(EntityRendererProvider.Context context) {
+  public SpecterRendererOLD(EntityRendererProvider.Context context) {
     super(context);
     this.root = context.bakeLayer(SpecterModel.LAYER_LOCATION);
     this.model = new SpecterModel(this.root);
@@ -62,30 +62,15 @@ public class SpecterRenderer extends EntityRenderer<Specter> implements RenderLa
     super.render(specter, entityYaw, partialTick, poseStack, buffer, packedLight);
   }
 
-  private static void doRender(Specter specter, SpecterRenderer renderer, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+  private static void doRender(Specter specter, SpecterRendererOLD renderer, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
     poseStack.pushPose();
 
     // BoatRenderer mimics
-//    poseStack.translate(0.0F, 0.0625f, 0.0F); // ?????
-//    float bodyYaw = Mth.rotLerp(partialTick, specter.yBodyRotO, specter.yBodyRot);
-//    poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - bodyYaw)); // enables left/right turning
-//    poseStack.mulPose(Axis.XP.rotationDegrees(180.0f - specter.getViewXRot(1.0f))); // flip around our specter to face forward
-
-    poseStack.scale(-1.0F, -1.0F, 1.0F); // ?????
-
-    // rotate yaw to face view direction (notice we are subtracting from 180.0F here,
-    // which inverts the rotation. why? I have no clue.)
     float bodyYaw = Mth.rotLerp(partialTick, specter.yBodyRotO, specter.yBodyRot);
-    poseStack.mulPose(Axis.YP.rotationDegrees(bodyYaw)); // enables left/right turning
-
-    // rotate pitch to match view direction (notice we are not subtracting from 180.0F here,
-    // instead using a negative value. why? I have no clue.)
-    poseStack.mulPose(Axis.XP.rotationDegrees(180.0F - specter.getViewXRot(1.0f))); // enables up/down turning
-
-    // translate the model upwards by half it's height to re-center
-    // in the bounding box
-    poseStack.translate(0.0F, 0.0625f * 3.0f, 0.0F);
-
+    poseStack.translate(0.0F, 0.0625f, 0.0F); // ?????
+    poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - bodyYaw)); // enables left/right turning
+    poseStack.mulPose(Axis.XP.rotationDegrees(180.0f - specter.getViewXRot(1.0f))); // flip around our specter to face forward
+    poseStack.scale(-1.0F, -1.0F, 1.0F); // ?????
     renderer.getModel().setupAnim(specter, partialTick, 0.0F, -0.1F, 0.0F, 0.0F);
 
     ResourceLocation texture = renderer.getTextureLocation(specter);
