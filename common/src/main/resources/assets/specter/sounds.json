@@ -11,5 +11,18 @@
         "preload": true
       }
     ]
+  },
+  "specter_beam": {
+    "sounds": [
+      {
+        "name": "specter:specter_beam",
+        "type": "file",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "stream": false,
+        "attenuation_distance": 8,
+        "preload": true
+      }
+    ]
   }
 }

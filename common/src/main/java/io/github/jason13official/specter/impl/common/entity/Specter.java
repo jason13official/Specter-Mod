@@ -1,21 +1,31 @@
 package io.github.jason13official.specter.impl.common.entity;
 
 import io.github.jason13official.specter.impl.common.item.DyeableCondensedSpecterItem;
+import io.github.jason13official.specter.impl.common.menu.SpecterMenu;
 import io.github.jason13official.specter.impl.common.registry.ModEntities;
 import io.github.jason13official.specter.impl.common.registry.ModItems;
 import io.github.jason13official.specter.impl.common.registry.ModSounds;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.DyedItemColor;
@@ -24,6 +34,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class Specter extends AbstractSpecter {
+
+  private static final EntityDataAccessor<Integer> DATA_ATTACK_TARGET = SynchedEntityData.defineId(Specter.class, EntityDataSerializers.INT);
+
+  private static final double ATTACK_RANGE = 16.0;
+  private static final int ATTACK_INTERVAL = 15;
+  private static final float CRITICAL_HEALTH_FRACTION = 0.2f;
+
+  private int attackCooldown;
+  private @Nullable LivingEntity clientSideCachedAttackTarget;
 
   public Specter(EntityType<? extends AbstractSpecter> entityType, Level level) {
     super(entityType, level);
@@ -46,7 +65,7 @@ public class Specter extends AbstractSpecter {
     return !this.isRemoved();
   }
 
-  /// shift + empty main hand converts us into an item
+  /// shift + empty main hand converts us into an item; a plain right-click opens the menu
   @Override
   protected @NotNull InteractionResult mobInteract(Player player, InteractionHand hand) {
 
@@ -55,6 +74,8 @@ public class Specter extends AbstractSpecter {
       if (player.isShiftKeyDown()) {
         player.setItemInHand(hand, this.toCondensedItemStack());
         this.discard();
+      } else if (!this.level().isClientSide) {
+        player.openMenu(new SimpleMenuProvider((id, inv, p) -> new SpecterMenu(id, inv), this.getDisplayName()));
       }
     }
 
@@ -77,8 +98,87 @@ public class Specter extends AbstractSpecter {
   }
 
   @Override
+  protected void defineSynchedData(SynchedEntityData.Builder builder) {
+    super.defineSynchedData(builder);
+
+    builder.define(DATA_ATTACK_TARGET, 0);
+  }
+
+  @Override
+  public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+    super.onSyncedDataUpdated(key);
+
+    if (DATA_ATTACK_TARGET.equals(key)) {
+      this.clientSideCachedAttackTarget = null;
+    }
+  }
+
+  @Override
+  protected @Nullable LivingEntity getLookFocus() {
+
+    LivingEntity target = this.getTarget();
+    return target != null ? target : super.getLookFocus();
+  }
+
+  public boolean hasActiveAttackTarget() {
+
+    return this.entityData.get(DATA_ATTACK_TARGET) != 0;
+  }
+
+  public @Nullable LivingEntity getActiveAttackTarget() {
+
+    if (!this.hasActiveAttackTarget()) return null;
+
+    if (!this.level().isClientSide) return this.getTarget();
+
+    if (this.clientSideCachedAttackTarget != null) return this.clientSideCachedAttackTarget;
+
+    Entity entity = this.level().getEntity(this.entityData.get(DATA_ATTACK_TARGET));
+    if (entity instanceof LivingEntity living) {
+      this.clientSideCachedAttackTarget = living;
+      return living;
+    }
+
+    return null;
+  }
+
+  private void setAttackTarget(@Nullable LivingEntity target) {
+
+    this.setTarget(target);
+    this.entityData.set(DATA_ATTACK_TARGET, target != null ? target.getId() : 0);
+  }
+
+  @Override
   public void tick() {
     super.tick();
+
+    if (!(this.level() instanceof ServerLevel)) return;
+    if (this.isDeadOrDying()) return;
+
+    LivingEntity owner = this.getOwner() instanceof LivingEntity livingOwner ? livingOwner : null;
+
+    boolean ownerCritical = owner != null && !owner.isDeadOrDying()
+        && owner.getHealth() <= owner.getMaxHealth() * CRITICAL_HEALTH_FRACTION;
+
+    if (ownerCritical) {
+      this.setAttackTarget(null);
+      if (this.tickCount % 5 == 0) {
+        healOwner();
+      }
+      if (this.tickCount % 20 == 0) {
+        healSelf();
+      }
+      return;
+    }
+
+    if (this.tickCount % 5 == 0 || !isValidAttackTarget(this.getTarget(), owner)) {
+      acquireAttackTarget(owner);
+    }
+
+    if (this.hasActiveAttackTarget()) {
+      tickAttack(owner);
+      return;
+    }
 
     if (this.tickCount % 20 == 0) {
       healOwner();
@@ -86,6 +186,82 @@ public class Specter extends AbstractSpecter {
         healSelf();
       }
     }
+  }
+
+  private void acquireAttackTarget(@Nullable LivingEntity owner) {
+
+    if (owner == null) {
+      this.setAttackTarget(null);
+      return;
+    }
+
+    LivingEntity selfLastAttacker = this.getLastHurtByMob();
+    if (isValidAttackTarget(selfLastAttacker, owner)) {
+      if (selfLastAttacker != this.getTarget()) {
+        this.setAttackTarget(selfLastAttacker);
+        this.attackCooldown = ATTACK_INTERVAL;
+      }
+      return;
+    }
+
+    LivingEntity ownerLastAttacker = owner.getLastHurtByMob();
+    if (isValidAttackTarget(ownerLastAttacker, owner)) {
+      if (ownerLastAttacker != this.getTarget()) {
+        this.setAttackTarget(ownerLastAttacker);
+        this.attackCooldown = ATTACK_INTERVAL;
+      }
+      return;
+    }
+
+    List<Monster> nearby = owner.level().getEntitiesOfClass(Monster.class, owner.getBoundingBox().inflate(ATTACK_RANGE),
+        candidate -> isValidAttackTarget(candidate, owner));
+
+    LivingEntity best = nearby.isEmpty() ? null : Collections.min(nearby,
+        Comparator.<Monster>comparingDouble(LivingEntity::getMaxHealth).reversed()
+            .thenComparingDouble(owner::distanceToSqr));
+
+    if (best != this.getTarget()) {
+      this.setAttackTarget(best);
+      this.attackCooldown = ATTACK_INTERVAL;
+    }
+  }
+
+  private boolean isValidAttackTarget(@Nullable LivingEntity target, @Nullable LivingEntity owner) {
+
+    if (target == null || owner == null) return false;
+    if (target == this || target == owner) return false;
+    if (!target.isAlive() || target.isRemoved()) return false;
+    if (target.level() != this.level()) return false;
+    if (owner.distanceToSqr(target) > ATTACK_RANGE * ATTACK_RANGE) return false;
+
+    if (target.getType() == owner.getType() && owner.getType() != EntityType.PLAYER) return false;
+
+    return this.hasLineOfSight(target);
+  }
+
+  private void tickAttack(@Nullable LivingEntity owner) {
+
+    LivingEntity target = this.getTarget();
+    if (!isValidAttackTarget(target, owner)) {
+      this.setAttackTarget(null);
+      return;
+    }
+
+    if (this.attackCooldown > 0) {
+      --this.attackCooldown;
+      return;
+    }
+
+    float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
+    if (target.hurt(this.damageSources().indirectMagic(this, this), damage)) {
+      target.setLastHurtByMob(this);
+    }
+
+    if (this.level() instanceof ServerLevel level) {
+      level.playSound(null, this.blockPosition(), ModSounds.SPECTER_BEAM, SoundSource.NEUTRAL);
+    }
+
+    this.attackCooldown = ATTACK_INTERVAL;
   }
 
   /// so our ghosts don't slowly die over time without healing
@@ -109,7 +285,6 @@ public class Specter extends AbstractSpecter {
       return;
     }
 
-    // level.playSound(null, this.blockPosition(), SoundEvents.ALLAY_THROW, SoundSource.AMBIENT, 0.6f, 0.4f);
     level.playSound(null, this.blockPosition(), ModSounds.SPECTER_SHELL, SoundSource.AMBIENT);
   }
 
@@ -148,13 +323,6 @@ public class Specter extends AbstractSpecter {
       owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 5, 0, true, true));
     }
 
-    // owner.level().playSound(null, this.blockPosition(), SoundEvents.ALLAY_THROW, SoundSource.AMBIENT, 0.6f, 0.8f);
     owner.level().playSound(null, this.blockPosition(), ModSounds.SPECTER_SHELL, SoundSource.AMBIENT);
-
-//    Vec3 pos = this.position();
-//    for (int i = 0; i < 4; i++) {
-//      float offset = (owner.getRandom().nextFloat() * 2) - 1;
-//      owner.level().addParticle(ParticleTypes.HAPPY_VILLAGER, pos.x + (offset / 2), pos.y + (offset / 2), pos.z + (offset / 2), offset, offset, offset);
-//    }
   }
 }

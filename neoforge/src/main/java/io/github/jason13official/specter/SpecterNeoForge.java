@@ -3,6 +3,8 @@ package io.github.jason13official.specter;
 import io.github.jason13official.specter.impl.common.entity.Specter;
 import io.github.jason13official.specter.impl.common.event.SpecterEvents;
 import io.github.jason13official.specter.impl.common.loot.NeoForgeLootModifiers;
+import io.github.jason13official.specter.impl.common.network.SpecterNetworking;
+import io.github.jason13official.specter.impl.common.network.SpecterNetworking.RenameSpecterPayload;
 import io.github.jason13official.specter.impl.common.registry.ModBlocks;
 import io.github.jason13official.specter.impl.common.registry.ModEntities;
 import io.github.jason13official.specter.impl.common.registry.ModItems;
@@ -33,6 +35,7 @@ import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
 @Mod(Constants.MOD_ID)
@@ -81,6 +84,14 @@ public class SpecterNeoForge {
       if (event.getLevel() instanceof ServerLevel level) {
         SpecterEvents.onEntityJoin(event.getEntity(), level);
       }
+    });
+
+    EVENT_BUS.addListener((Consumer<RegisterPayloadHandlersEvent>) event -> {
+      event.registrar("1").playToServer(RenameSpecterPayload.TYPE, RenameSpecterPayload.STREAM_CODEC, (payload, context) -> {
+        if (context.player() instanceof ServerPlayer player) {
+          SpecterNetworking.handleRenameSpecter(player, payload.name());
+        }
+      });
     });
 
     if (FMLLoader.getDist() == Dist.CLIENT) {

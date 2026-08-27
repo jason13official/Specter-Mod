@@ -1,6 +1,7 @@
 package io.github.jason13official.specter.platform;
 
 import io.github.jason13official.specter.Constants;
+import io.github.jason13official.specter.platform.services.INetworkHelper;
 import io.github.jason13official.specter.platform.services.IPlatformHelper;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
@@ -8,6 +9,17 @@ import java.util.ServiceLoader;
 public class Services {
 
   public static final IPlatformHelper PLATFORM = load(IPlatformHelper.class);
+
+  private static INetworkHelper network;
+
+  public static INetworkHelper network() {
+
+    if (network == null) {
+      network = load(INetworkHelper.class);
+    }
+
+    return network;
+  }
 
   private static <T> T load(Class<T> clazz) {
 

@@ -3,5 +3,14 @@
   "item.specter.specter_core": "Specter Core",
   "item.specter.condensed_specter": "Condensed Specter",
 
-  "entity.specter.specter": "Specter"
+  "entity.specter.specter": "Specter",
+
+  "gui.specter.name": "Name",
+  "gui.specter.rename": "Rename",
+  "gui.specter.missing": "No Specter found",
+  "gui.specter.owner": "Owner: %s",
+  "gui.specter.no_owner": "None",
+  "gui.specter.health": "Health: %s / %s",
+  "gui.specter.attack_damage": "Attack Damage: %s",
+  "gui.specter.color": "Color:"
 }

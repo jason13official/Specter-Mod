@@ -20,6 +20,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -57,6 +58,19 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
   }
 
   // region apiStuff
+
+  @Override
+  public double getEyeY() {
+
+    return this.getBbHeight() / 2.0f;
+  }
+
+  @Override
+  protected EntityDimensions getDefaultDimensions(Pose pose) {
+
+    EntityDimensions dimensions = super.getDefaultDimensions(pose);
+    return dimensions.withEyeHeight(dimensions.height() / 2.0f);
+  }
 
   @Override
   protected void defineSynchedData(Builder builder) {
@@ -134,8 +148,10 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
 
   /// search near ownerId's last known position;
   /// relies on [AbstractSpecter#teleportToOwner] keeping Specter near its owner
+  ///
+  /// accept `Level` rather than `ServerLevel` so it can resolve client-side (e.g. for `SpecterMenu`)
   @Nullable
-  public static AbstractSpecter findOwned(ServerLevel level, LivingEntity owner) {
+  public static AbstractSpecter findOwned(Level level, LivingEntity owner) {
 
     List<AbstractSpecter> found = level.getEntities(EntityTypeTest.forClass(AbstractSpecter.class),
         owner.getBoundingBox().inflate(32.0D), specter -> owner.getUUID().equals(specter.getOwnerId().orElse(null)));
@@ -166,7 +182,7 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
 
     floatTowardsOwner();
 
-    lookAtOwner();
+    lookAtFocus();
 
     if (this.level() instanceof ServerLevel level && this.owner == null) {
 
@@ -223,7 +239,7 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
 
     // near the owner, settle towards a steady resting height instead of chasing eye
     // height; the bobbing compounds into an upward drift after fast movement
-    double targetY = nearOwner ? this.owner.getY() + 1.0 : this.owner.getY() + this.owner.getEyeHeight() + 0.25;
+    double targetY = nearOwner ? this.owner.getY() + this.owner.getEyeHeight(Pose.STANDING) : this.owner.getY() + this.owner.getEyeHeight() + 0.25;
 
     Vec3 toOwner = new Vec3(this.owner.getX() - this.getX(), targetY - this.getY(), this.owner.getZ() - this.getZ());
     double distSq = toOwner.lengthSqr();
@@ -254,19 +270,26 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
   }
 
   /// server-authoritative; the client interpolates rotation
-  private void lookAtOwner() {
+  private void lookAtFocus() {
 
     if (!(this.level() instanceof ServerLevel)) return;
-    if (this.owner == null) return;
+
+    LivingEntity focus = this.getLookFocus();
+    if (focus == null) return;
 
     float maxRotDegrees = 8.0f;
 
-    Vec3 toOwner = new Vec3(this.owner.getX() - this.getX(), this.owner.getY() + this.owner.getEyeHeight() + 0.25 - this.getY(), this.owner.getZ() - this.getZ());
-    if (toOwner.lengthSqr() > 16.0) {
+    Vec3 toFocus = new Vec3(focus.getX() - this.getX(), focus.getY() + focus.getEyeHeight() + 0.25 - this.getY(), focus.getZ() - this.getZ());
+    if (toFocus.lengthSqr() > 16.0) {
       maxRotDegrees = 16.0f;
     }
 
-    this.lookAt(this.owner, maxRotDegrees, maxRotDegrees);
+    this.lookAt(focus, maxRotDegrees, maxRotDegrees);
+  }
+
+  protected @Nullable LivingEntity getLookFocus() {
+
+    return this.owner;
   }
 
   /// discards this instance and spawns a fresh one in the owner's level, carrying over full NBT;
