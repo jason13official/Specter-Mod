@@ -30,6 +30,7 @@ public class SpecterScreen extends AbstractContainerScreen<SpecterMenu> {
   private static final int PANEL_BORDER = 0x804FD4FF;
 
   private EditBox nameBox;
+  private Button renameButton;
 
   private int portraitCenterX;
   private int portraitCenterY;
@@ -65,7 +66,7 @@ public class SpecterScreen extends AbstractContainerScreen<SpecterMenu> {
     this.nameBox.setEditable(specter != null);
     this.addRenderableWidget(this.nameBox);
 
-    Button renameButton = Button.builder(Component.translatable("gui.specter.rename"), button -> this.onRename())
+    this.renameButton = Button.builder(Component.translatable("gui.specter.rename"), button -> this.onRename())
         .bounds(this.portraitCenterX - 40, nameBoxY + NAME_BOX_HEIGHT + 8, 80, 20).build();
     renameButton.active = specter != null;
     this.addRenderableWidget(renameButton);
@@ -86,6 +87,21 @@ public class SpecterScreen extends AbstractContainerScreen<SpecterMenu> {
     super.containerTick();
 
     this.nameBox.tick();
+  }
+
+  /// unfocus widgets if not clicking on widgets (why doesn't vanilla do this?)
+  @Override
+  public boolean mouseClicked(double mouseX, double mouseY, int button) {
+
+    if (this.nameBox.isFocused() && !this.nameBox.isMouseOver(mouseX, mouseY)) {
+      this.nameBox.setFocused(false);
+    }
+
+    if (this.renameButton.isFocused() && !this.renameButton.isMouseOver(mouseX, mouseY)) {
+      this.renameButton.setFocused(false);
+    }
+
+    return super.mouseClicked(mouseX, mouseY, button);
   }
 
   /// super closes the screen on the inventory key (`e` default);
@@ -118,10 +134,23 @@ public class SpecterScreen extends AbstractContainerScreen<SpecterMenu> {
     }
 
     int portraitFeetY = this.portraitCenterY + PORTRAIT_SIZE / 2 - 6;
+
+    // while the name box is focused, have the specter track the text cursor instead of the
+    // mouse, like the specter is watching the typing; fall back to the mouse position if not focused
+    int lookTargetX;
+    int lookTargetY;
+    if (this.nameBox.isFocused()) {
+      lookTargetX = this.nameBox.getScreenX(this.nameBox.getCursorPosition());
+      lookTargetY = this.nameBox.getY() + this.nameBox.getHeight() / 2;
+    } else {
+      lookTargetX = mouseX;
+      lookTargetY = mouseY;
+    }
+
     // pitch reference is portraitCenterY (where the model visually sits), not a feet-anchored
     // offset like vanilla's player portrait -> Specter's model renders centered in its box
-    InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, this.portraitCenterX, portraitFeetY, PORTRAIT_SCALE, (float) this.portraitCenterX - mouseX,
-        ((float) this.portraitCenterY - mouseY) + 12.0f, specter);
+    InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, this.portraitCenterX, portraitFeetY, PORTRAIT_SCALE, (float) this.portraitCenterX - lookTargetX,
+        ((float) this.portraitCenterY - lookTargetY) + 12.0f, specter);
 
     this.drawFloatingPanel(guiGraphics, this.statsX, this.statsY, STATS_WIDTH, this.statsHeight);
 
