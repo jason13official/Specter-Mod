@@ -19,6 +19,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.entity.TraceableEntity;
 import net.minecraft.world.item.DyeColor;
@@ -233,7 +234,7 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
 
     // near the owner, settle towards a steady resting height instead of chasing eye
     // height; the bobbing compounds into an upward drift after fast movement
-    double targetY = nearOwner ? this.owner.getY() + 1.0 : this.owner.getY() + this.owner.getEyeHeight() + 0.25;
+    double targetY = nearOwner ? this.owner.getY() + this.owner.getEyeHeight(Pose.STANDING) : this.owner.getY() + this.owner.getEyeHeight() + 0.25;
 
     Vec3 toOwner = new Vec3(this.owner.getX() - this.getX(), targetY - this.getY(), this.owner.getZ() - this.getZ());
     double distSq = toOwner.lengthSqr();

@@ -19,20 +19,31 @@ public class SpecterModel extends EntityModel<Specter> {
 
   public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(ModEntities.SPECTER_ID, "main");
 
-  private final ModelPart body;
-  private final ModelPart shell;
+  private ModelPart body;
+  private ModelPart shell;
 
   private boolean shellRendered = false;
 
   public SpecterModel(final ModelPart root) {
-    this.body = root.getChild("body");
-    this.shell = root.getChild("shell");
+    construct(this, root);
+  }
+
+  private static void construct(SpecterModel model, ModelPart root) {
+    model.body = root.getChild("body");
+    model.shell = root.getChild("shell");
   }
 
   public static LayerDefinition createBodyLayer() {
     MeshDefinition mesh = new MeshDefinition();
     PartDefinition root = mesh.getRoot();
 
+    defineModel(root, mesh);
+
+    return LayerDefinition.create(mesh, 64, 64);
+  }
+
+  /// hot-swappable ?
+  private static void defineModel(PartDefinition root, MeshDefinition mesh) {
     PartDefinition body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 16).addBox(-1.0F, -3.0F, 1.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)),
         PartPose.offset(0.0F, 4.0F, 0.0F));
     PartDefinition cube_r1 = body.addOrReplaceChild("cube_r1", CubeListBuilder.create().texOffs(0, 8).addBox(-2.0F, -2.0F, -2.0F, 4.0F, 4.0F, 4.0F, new CubeDeformation(0.0F)),
@@ -42,13 +53,11 @@ public class SpecterModel extends EntityModel<Specter> {
 
     PartDefinition shell = root.addOrReplaceChild("shell", CubeListBuilder.create().texOffs(0, 20).addBox(-4.0F, -6.0F, -4.0F, 8.0F, 8.0F, 8.0F, new CubeDeformation(0.0F)),
         PartPose.offset(0.0F, 4.0F, 0.0F));
-
-    return LayerDefinition.create(mesh, 64, 64);
   }
 
   public boolean isShellRendered() {
 
-    return this.shellRendered;
+    return this.shell != null && this.shellRendered;
   }
 
   public void setShellRendered(boolean value) {
@@ -75,10 +84,14 @@ public class SpecterModel extends EntityModel<Specter> {
   @Override
   public void renderToBuffer(@NotNull PoseStack poseStack, @NotNull VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
 
-    this.body.render(poseStack, vertexConsumer, light, overlay, red, green, blue, alpha);
+    staticRenderToBuffer(this, poseStack, vertexConsumer, light, overlay, red, green, blue, alpha);
+  }
 
-    if (this.isShellRendered()) {
-      this.shell.render(poseStack, vertexConsumer, light, overlay, red, green, blue, alpha);
+  private static void staticRenderToBuffer(SpecterModel model, @NotNull PoseStack poseStack, @NotNull VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
+    if (model.body != null) model.body.render(poseStack, vertexConsumer, light, overlay, red, green, blue, alpha);
+
+    if (model.shell != null && model.isShellRendered()) {
+      model.shell.render(poseStack, vertexConsumer, light, overlay, red, green, blue, alpha);
     }
   }
 }
