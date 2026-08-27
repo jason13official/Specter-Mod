@@ -299,6 +299,7 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
   }
 
   /// server-authoritative; the client interpolates rotation
+  /// TODO pitch (x-axis) rotation seems to halt during creative flight/ at odd angles sometimes
   private void lookAtOwner() {
 
     if (!(this.level() instanceof ServerLevel)) return;
