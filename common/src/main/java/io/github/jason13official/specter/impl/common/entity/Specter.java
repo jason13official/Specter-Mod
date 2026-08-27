@@ -226,7 +226,7 @@ public class Specter extends AbstractSpecter {
         candidate -> isValidAttackTarget(candidate, owner));
 
     LivingEntity best = nearby.isEmpty() ? null : Collections.min(nearby,
-        Comparator.<Monster>comparingDouble(LivingEntity::getHealth).reversed()
+        Comparator.<Monster>comparingDouble(LivingEntity::getMaxHealth).reversed()
             .thenComparingDouble(owner::distanceToSqr));
 
     if (best != this.getTarget()) {
@@ -264,7 +264,7 @@ public class Specter extends AbstractSpecter {
     target.hurt(this.damageSources().indirectMagic(this, this), damage);
 
     if (this.level() instanceof ServerLevel level) {
-      level.playSound(null, this.blockPosition(), ModSounds.SPECTER_SHELL, SoundSource.NEUTRAL, 0.6f, 1.8f);
+      level.playSound(null, this.blockPosition(), ModSounds.SPECTER_BEAM, SoundSource.NEUTRAL);
     }
 
     this.attackCooldown = ATTACK_INTERVAL;
