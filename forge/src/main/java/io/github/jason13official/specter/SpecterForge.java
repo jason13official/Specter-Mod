@@ -29,6 +29,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
@@ -84,6 +85,12 @@ public class SpecterForge {
     MinecraftForge.EVENT_BUS.addListener((Consumer<EntityJoinLevelEvent>) event -> {
       if (event.getLevel() instanceof ServerLevel level) {
         SpecterEvents.onEntityJoin(event.getEntity(), level);
+      }
+    });
+
+    MinecraftForge.EVENT_BUS.addListener((Consumer<EntityLeaveLevelEvent>) event -> {
+      if (event.getLevel() instanceof ServerLevel level) {
+        SpecterEvents.onEntityLeave(event.getEntity(), level);
       }
     });
 

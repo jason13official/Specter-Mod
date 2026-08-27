@@ -53,6 +53,7 @@ public class SpecterFabric implements ModInitializer {
     ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> SpecterEvents.onPlayerLoggedOut(handler.getPlayer()));
 
     ServerEntityEvents.ENTITY_LOAD.register(SpecterEvents::onEntityJoin);
+    ServerEntityEvents.ENTITY_UNLOAD.register(SpecterEvents::onEntityLeave);
 
     ServerPlayNetworking.registerGlobalReceiver(SpecterNetworking.RENAME_SPECTER_PACKET, (server, player, handler, buf, responseSender) -> {
       String name = buf.readUtf(SpecterNetworking.MAX_NAME_LENGTH);
