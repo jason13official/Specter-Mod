@@ -1,6 +1,8 @@
 package io.github.jason13official.specter;
 
+import io.github.jason13official.specter.impl.client.model.CubeCompanionModel;
 import io.github.jason13official.specter.impl.client.model.SpecterModel;
+import io.github.jason13official.specter.impl.client.renderer.CubeCompanionRenderer;
 import io.github.jason13official.specter.impl.client.renderer.SpecterRenderer;
 import io.github.jason13official.specter.impl.client.screen.SpecterScreen;
 import io.github.jason13official.specter.impl.common.registry.ModEntities;
@@ -23,6 +25,9 @@ public class SpecterClientFabric implements ClientModInitializer {
 
     EntityModelLayerRegistry.registerModelLayer(SpecterModel.LAYER_LOCATION, SpecterModel::createBodyLayer);
     EntityRendererRegistry.register(ModEntities.SPECTER, SpecterRenderer::new);
+
+    EntityModelLayerRegistry.registerModelLayer(CubeCompanionModel.LAYER_LOCATION, CubeCompanionModel::createBodyLayer);
+    EntityRendererRegistry.register(ModEntities.CUBE, CubeCompanionRenderer::new);
 
     MenuScreens.register(ModMenus.SPECTER, SpecterScreen::new);
   }

@@ -45,6 +45,7 @@ public class SpecterFabric implements ModInitializer {
     SpecterMod.init();
 
     FabricDefaultAttributeRegistry.register(ModEntities.SPECTER, Specter.createAttributes());
+    FabricDefaultAttributeRegistry.register(ModEntities.CUBE, Specter.createAttributes());
 
     ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new ResourceReloadListener());
 

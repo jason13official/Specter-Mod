@@ -62,6 +62,7 @@ public class SpecterForge {
 
     EVENT_BUS.addListener((Consumer<EntityAttributeCreationEvent>) event -> {
       event.put(ModEntities.SPECTER, Specter.createAttributes().build());
+      event.put(ModEntities.CUBE, Specter.createAttributes().build());
     });
 
     MinecraftForge.EVENT_BUS.addListener((Consumer<AddReloadListenerEvent>) event -> {

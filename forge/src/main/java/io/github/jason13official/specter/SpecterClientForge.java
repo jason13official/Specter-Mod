@@ -1,6 +1,8 @@
 package io.github.jason13official.specter;
 
+import io.github.jason13official.specter.impl.client.model.CubeCompanionModel;
 import io.github.jason13official.specter.impl.client.model.SpecterModel;
+import io.github.jason13official.specter.impl.client.renderer.CubeCompanionRenderer;
 import io.github.jason13official.specter.impl.client.renderer.SpecterRenderer;
 import io.github.jason13official.specter.impl.client.screen.SpecterScreen;
 import io.github.jason13official.specter.impl.common.registry.ModEntities;
@@ -32,10 +34,12 @@ public class SpecterClientForge {
 
     modEventBus.addListener((Consumer<EntityRenderersEvent.RegisterLayerDefinitions>) event -> {
       event.registerLayerDefinition(SpecterModel.LAYER_LOCATION, SpecterModel::createBodyLayer);
+      event.registerLayerDefinition(CubeCompanionModel.LAYER_LOCATION, CubeCompanionModel::createBodyLayer);
     });
 
     modEventBus.addListener((Consumer<EntityRenderersEvent.RegisterRenderers>) event -> {
       event.registerEntityRenderer(ModEntities.SPECTER, SpecterRenderer::new);
+      event.registerEntityRenderer(ModEntities.CUBE, CubeCompanionRenderer::new);
     });
   }
 }
