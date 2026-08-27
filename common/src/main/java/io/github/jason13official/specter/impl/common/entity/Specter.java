@@ -60,7 +60,7 @@ public class Specter extends AbstractSpecter {
 
   public static AttributeSupplier.Builder createAttributes() {
 
-    return Mob.createMobAttributes().add(Attributes.ATTACK_DAMAGE);
+    return Mob.createMobAttributes().add(Attributes.ATTACK_DAMAGE); // attack damage defaults to 2.0f
   }
 
   /// enables middle-click / right-click interactions
