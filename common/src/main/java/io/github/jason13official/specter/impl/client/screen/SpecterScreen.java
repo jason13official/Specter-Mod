@@ -25,6 +25,8 @@ public class SpecterScreen extends AbstractContainerScreen<SpecterMenu> {
   public static final int STATS_WIDTH = 130;
   public static final int LINE_HEIGHT = 12;
 
+  public static final int NAME_TAG_CLIP_MARGIN = 24;
+
   private static final int PANEL_FILL = 0xB2101820;
   private static final int PANEL_ACCENT = 0xFF4FD4FF;
   private static final int PANEL_BORDER = 0x804FD4FF;
@@ -131,10 +133,13 @@ public class SpecterScreen extends AbstractContainerScreen<SpecterMenu> {
       lookTargetY = mouseY;
     }
 
+    // renderEntityInInventoryFollowsMouse scissors to exactly this box (unlike 1.20.1's
+    // overload, which never clipped at all) - pad it vertically, symmetrically so the portrait's
+    // center doesn't shift, so the floating name tag above the entity's head isn't cut off
     int x1 = this.portraitCenterX - PORTRAIT_SIZE / 2;
-    int y1 = this.portraitCenterY - PORTRAIT_SIZE / 2;
+    int y1 = this.portraitCenterY - PORTRAIT_SIZE / 2 - (NAME_TAG_CLIP_MARGIN * 2);
     int x2 = this.portraitCenterX + PORTRAIT_SIZE / 2;
-    int y2 = this.portraitCenterY + PORTRAIT_SIZE / 2;
+    int y2 = this.portraitCenterY + PORTRAIT_SIZE / 2 + (NAME_TAG_CLIP_MARGIN * 2);
 
     InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, x1, y1, x2, y2, PORTRAIT_SCALE, 0.0625F, lookTargetX, lookTargetY, specter);
 
