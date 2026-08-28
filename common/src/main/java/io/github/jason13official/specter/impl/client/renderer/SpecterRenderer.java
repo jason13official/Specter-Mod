@@ -75,8 +75,11 @@ public class SpecterRenderer extends EntityRenderer<Specter> implements RenderLa
       rawYaw = (float) (Mth.atan2(diff.z, diff.x) * (180D / Math.PI)) - 90.0F;
       rawPitch = (float) (-(Mth.atan2(diff.y, horizontalDist) * (180D / Math.PI)));
     } else {
-      rawYaw = entityYaw;
-      rawPitch = specter.getViewXRot(1.0f);
+      // `entityYaw` is unused by vanilla for body rotation (LivingEntityRenderer reads
+      // yBodyRot/yBodyRotO directly), and the GUI portrait renderer always passes 0.0F for it -
+      // reading it here made the Specter always face yaw 0 in the inventory/rename screen.
+      rawYaw = Mth.rotLerp(partialTick, specter.yBodyRotO, specter.yBodyRot);
+      rawPitch = specter.getViewXRot(partialTick);
     }
 
     poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - rawYaw));

@@ -70,7 +70,7 @@ public class SpecterScreen extends AbstractContainerScreen<SpecterMenu> {
     this.addRenderableWidget(renameButton);
 
     this.statsHeight = 14 + LINE_HEIGHT * 4 + 8;
-    this.statsX = this.portraitCenterX + PORTRAIT_SIZE / 2 + 30;
+    this.statsX = Math.min(this.portraitCenterX + PORTRAIT_SIZE / 2 + 30, this.width - STATS_WIDTH - 8);
     this.statsY = this.portraitCenterY - this.statsHeight / 2;
   }
 

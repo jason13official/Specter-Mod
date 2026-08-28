@@ -269,6 +269,20 @@ public abstract class AbstractSpecter extends Mob implements TraceableEntity {
     this.setDeltaMovement(movement.multiply(0.49, 0.98, 0.49));
   }
 
+  /// `LivingEntity#tick` derives the `yRot` param from movement heading (`xo`/`zo` delta), not
+  /// `getYRot()` -> when barely translating (Specter floating while a close owner circles it) it
+  /// just passes back the current `yBodyRot`, so any delta against that param is always ~0. Read
+  /// `getYRot()` directly instead, which is what `lookAtFocus()` actually points at the focus
+  @Override
+  protected float tickHeadTurn(float yRot, float animStep) {
+
+    float delta = Mth.wrapDegrees(this.getYRot() - this.yBodyRot);
+    this.yBodyRot += delta * 0.3F;
+    this.yHeadRot = this.yBodyRot;
+
+    return animStep;
+  }
+
   /// server-authoritative; the client interpolates rotation
   private void lookAtFocus() {
 
