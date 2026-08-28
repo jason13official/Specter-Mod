@@ -111,7 +111,8 @@ public class SpecterScreen extends AbstractContainerScreen<SpecterMenu> {
   @Override
   protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
 
-    this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+    // this.renderBackground(guiGraphics, mouseX, mouseY, partialTick); // calls to renderBq (this method)...
+    this.renderTransparentBackground(guiGraphics);
 
     AbstractSpecter specter = this.menu.getSpecter();
 
