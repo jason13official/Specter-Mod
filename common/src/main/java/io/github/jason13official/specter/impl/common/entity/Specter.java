@@ -28,6 +28,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +70,27 @@ public class Specter extends AbstractSpecter {
   @Override
   protected @NotNull InteractionResult mobInteract(Player player, InteractionHand hand) {
 
-    if (this.getOwner() == player && hand == InteractionHand.MAIN_HAND && player.getItemInHand(hand).isEmpty()) {
+    ItemStack heldItem = player.getItemInHand(hand);
+
+    // redstone heal: we only naturally heal back to half health, so give owner a way past that
+    if (this.getOwner() == player && hand == InteractionHand.MAIN_HAND && this.getHealth() < this.getMaxHealth()) {
+
+      float healAmount = heldItem.is(Items.REDSTONE_BLOCK) ? 9.0f : heldItem.is(Items.REDSTONE) ? 1.0f : 0.0f;
+
+      if (healAmount > 0.0f) {
+        if (!this.level().isClientSide) {
+          this.heal(healAmount);
+          if (!player.getAbilities().instabuild) {
+            heldItem.shrink(1);
+          }
+          this.level().playSound(null, this.blockPosition(), ModSounds.SPECTER_SHELL, SoundSource.AMBIENT);
+        }
+
+        return InteractionResult.SUCCESS;
+      }
+    }
+
+    if (this.getOwner() == player && hand == InteractionHand.MAIN_HAND && heldItem.isEmpty()) {
 
       if (player.isShiftKeyDown()) {
         player.setItemInHand(hand, this.toCondensedItemStack());
