@@ -34,6 +34,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
@@ -83,6 +84,12 @@ public class SpecterNeoForge {
     NeoForge.EVENT_BUS.addListener((Consumer<EntityJoinLevelEvent>) event -> {
       if (event.getLevel() instanceof ServerLevel level) {
         SpecterEvents.onEntityJoin(event.getEntity(), level);
+      }
+    });
+
+    NeoForge.EVENT_BUS.addListener((Consumer<EntityLeaveLevelEvent>) event -> {
+      if (event.getLevel() instanceof ServerLevel level) {
+        SpecterEvents.onEntityLeave(event.getEntity(), level);
       }
     });
 

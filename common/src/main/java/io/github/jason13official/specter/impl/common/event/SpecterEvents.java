@@ -29,6 +29,12 @@ public class SpecterEvents {
     if (level.getRandom().nextFloat() >= ServerModConfig.SPECTERS_FOR_ZOMBIES_CHANCE.get()) return;
     if (AbstractSpecter.findOwned(level, zombie) != null) return;
 
+    if (alreadyAttempted(entity)) {
+      return; // so we do not retry for already existing entities
+    } else {
+      setAttempted(entity);
+    }
+
     AbstractSpecter specter = ModEntities.SPECTER.create(level);
     if (specter == null) return;
 
@@ -40,6 +46,29 @@ public class SpecterEvents {
     specter.setOwner(zombie);
 
     level.addFreshEntity(specter);
+  }
+
+  private static boolean alreadyAttempted(Entity entity) {
+
+    SpecterDataHolder holder = (SpecterDataHolder) entity;
+    CompoundTag data = holder.specter$getPersistentData();
+
+    return data.contains("specter_attempt") && data.getBoolean("specter_attempt");
+  }
+
+  private static void setAttempted(Entity entity) {
+
+    SpecterDataHolder holder = (SpecterDataHolder) entity;
+    CompoundTag data = holder.specter$getPersistentData();
+
+    data.putBoolean("specter_attempt", true);
+
+    holder.specter$setPersistentData(data);
+  }
+
+  public static void onEntityLeave(Entity entity, ServerLevel level) {
+
+    setAttempted(entity); // they already spawned, and are now leaving
   }
 
   public static void onPlayerLoggedIn(ServerPlayer player) {

@@ -54,6 +54,7 @@ public class SpecterFabric implements ModInitializer {
     ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> SpecterEvents.onPlayerLoggedOut(handler.getPlayer()));
 
     ServerEntityEvents.ENTITY_LOAD.register(SpecterEvents::onEntityJoin);
+    ServerEntityEvents.ENTITY_UNLOAD.register(SpecterEvents::onEntityLeave);
 
     PayloadTypeRegistry.playC2S().register(RenameSpecterPayload.TYPE, RenameSpecterPayload.STREAM_CODEC);
     ServerPlayNetworking.registerGlobalReceiver(RenameSpecterPayload.TYPE, (payload, context) ->
